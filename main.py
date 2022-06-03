@@ -1,5 +1,7 @@
 
 from analisischip import seq_data
+from pyensembl import EnsemblRelease
+from Bio import Entrez, SeqIO
 
 '''
 Archivo donde ejecuto mis scripts
@@ -14,4 +16,6 @@ if __name__=='__main__':
     hg19 = EnsemblRelease(102, species='human');
     GRCm38 = EnsemblRelease(102, species='mouse');
     dict_genomas = {'mm9':mm9, 'mouse':mm9, 'hg19':hg19, 'human':hg19, 'GRCm38':GRCm38, 'mouse102':GRCm38};
+
+
     output_dump.append('');

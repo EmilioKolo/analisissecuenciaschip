@@ -18,7 +18,7 @@ Almacena secuencias en formato chr_n, pos_ini, pos_end, seq
 Puede almacenar chr_n, pos_ini, pos_end en preparacion para buscar seq
 Guarda secuencias en .csv
     '''
-    def __init__(self, genome_name):
+    def __init__(self, genome_name, dict_genomas):
         # M_seq almacena todos los rangos de secuencias
         # Rangos almacenados en formato chr_n, pos_ini, pos_end, seq
         # seq puede ser un string vacio
