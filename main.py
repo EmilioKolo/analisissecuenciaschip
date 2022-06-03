@@ -1,7 +1,7 @@
 
-from analisischip import seq_data
 from pyensembl import EnsemblRelease
 from Bio import Entrez, SeqIO
+from analisischip import seq_data
 
 '''
 Archivo donde ejecuto mis scripts

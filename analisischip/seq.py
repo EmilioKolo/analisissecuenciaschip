@@ -2,6 +2,7 @@
 import os
 import time
 import copy
+import logging
 from random import shuffle
 from pyensembl import EnsemblRelease
 # Analisis de secuencias y genomas
@@ -27,7 +28,7 @@ Guarda secuencias en .csv
             self.genome_name = genome_name;
             self.genome = dict_genomas[genome_name];
         else:
-            print('Genoma "' + str(genome_name) + '" no reconocido. Se usa mm9 de raton como default.')
+            logging.warning('Genoma "' + str(genome_name) + '" no reconocido. Se usa mm9 de raton como default.');
             self.genome_name = 'mm9';
             self.genome = dict_genomas['mm9'];
         return None
@@ -71,7 +72,7 @@ Guarda secuencias en .csv
         # Funcion para hacer prints que se sobreescriban entre si
         # Cambio end para usar en consola o en Python IDLE
         # end='\r' para consola; end='\n' para Python IDLE
-        print(texto, end='\r')
+        print(texto, end='\r');
         return self
 
 
@@ -152,7 +153,7 @@ Guarda secuencias en .csv
         
         # Creo y abro el archivo de output
         with open(nombre_out + ext, 'w') as F_out:
-            print('Archivo ' + str(nombre_out) + str(ext) + ' creado.')
+            print('Archivo ' + str(nombre_out) + str(ext) + ' creado.');
         with open(nombre_out + ext, 'a') as F_out:
             # Recorro self.M_seq
             for i in range(len(self.M_seq)):
@@ -226,13 +227,13 @@ Guarda secuencias en .csv
             self._print_progress(p_text);
             # Reviso si hubo errores que mostrar
             if p_ret[5:] == 'ERROR':
-                print(p_ret)
+                logging.error(p_ret);
         p_final = 'Carga terminada. Secuencias OK: ' + str(seq_ok) + '. Secuencias con errores: ' + str(seq_error) + '.'
         if carga_vacias:
             p_final = p_final + ' Secuencias cargadas: ' + str(seq_cargada) + '.';
         else:
             p_final = p_final + ' Secuencias vacias: ' + str(seq_vacias) + '.';
-        print(p_final)
+        print(p_final);
         return self
 
 
@@ -247,7 +248,7 @@ def abrir_arch_dir(dir_arch, nom_arch, ext, sep_arch):
     M_out = [];
     # Abro el archivo
     with open(dir_arch + ext, 'r') as F:
-        print('Archivo ' + str(nom_arch) + str(ext) + ' abierto.')
+        print('Archivo ' + str(nom_arch) + str(ext) + ' abierto.');
         # Reviso cada linea de F
         for curr_line in F:
             # Paso cada linea a formato de lista
@@ -264,7 +265,7 @@ def abrir_archivo(nom_arch, ext, sep_arch):
     M_out = [];
     # Abro el archivo
     with open(nom_arch + ext, 'r') as F:
-        print('Archivo ' + str(nom_arch) + str(ext) + ' abierto.')
+        print('Archivo ' + str(nom_arch) + str(ext) + ' abierto.');
         # Reviso cada linea de F
         for curr_line in F:
             # Paso cada linea a formato de lista
@@ -280,7 +281,7 @@ def complemento(N,adn=True):
     dict_arn = {'T':'A','U':'A','A':'U','C':'G','G':'C','N':'N'};
 
     if not (N in dict_adn.keys()):
-        print('Nucleotido "' + str(N) + '" no interpretado. Se devuelve N.')
+        logging.warning('Nucleotido "' + str(N) + '" no interpretado. Se devuelve N.');
         ret = 'N';
     elif adn:
         ret = dict_adn[N];
@@ -309,8 +310,8 @@ def ConsultaSecuencia(id_chr, seq_start, seq_finish, strand=1, sleep_time=60):
         handle.close();
         rec_seq = record.seq;
     except:
-        print('Exception raised for chr ' + str(id_chr) + ' between positions ' +
-              str(seq_start) + ' and ' + str(seq_finish) + '.')
+        logging.warning('Exception raised for chr ' + str(id_chr) + ' between positions ' + 
+                        str(seq_start) + ' and ' + str(seq_finish) + '.');
         time.sleep(sleep_time);
         try:
             handle = Entrez.efetch(db='nucleotide', id=id_chr, rettype='fasta',
@@ -319,7 +320,7 @@ def ConsultaSecuencia(id_chr, seq_start, seq_finish, strand=1, sleep_time=60):
             handle.close();
             rec_seq = record.seq;
         except:
-            print('Retry failed. Returning empty string.')
+            logging.error('Retry failed. Returning empty string.');
     return rec_seq
 
 
@@ -351,12 +352,12 @@ def IDchr(chromosome,genome='hg19'):
                       '7':'CM001000.3', '8':'CM001001.3', '9':'CM001002.3', 'MT':'AY172335.1',
                       'X':'CM001013.3', 'Y':'CM001014.3', 'M':'AY172335.1'};
     else:
-        print('No se pudo encontrar genoma ' + str(genome))
+        logging.error('No se pudo encontrar genoma ' + str(genome))
         b = False;
         dict_IDchr = {};
 
     if str(chromosome).upper() in dict_IDchr.keys():
         ret = dict_IDchr[str(chromosome).upper()];
     elif b:
-        print('No se pudo encontrar cromosoma ' + str(chromosome))
+        logging.error('No se pudo encontrar cromosoma ' + str(chromosome))
     return ret
