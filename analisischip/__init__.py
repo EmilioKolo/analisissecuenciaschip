@@ -1,0 +1,1 @@
+from analisischip.seq import seq_data

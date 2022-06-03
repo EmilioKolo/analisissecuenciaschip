@@ -1,8 +1,7 @@
-
 from analisischip import seq_data
 
 '''
-Archivo donde ejecuto mis scripts
+Archivo donde ejecuto las pruebas
 '''
 
 output_dump = [];

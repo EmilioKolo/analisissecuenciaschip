@@ -139,7 +139,7 @@ Guarda secuencias en .csv
         else:
             dir_arch = nom_arch;
         # Extraigo las secuencias de dir_arch en loaded_M_seq
-        loaded_M_seq = abrir_arch_dir(dir_arch, nom_arch, ext, sep_arch);
+        loaded_M_seq = abrir_arch_dir(dir_arch, nom_arch, ext, sep);
 
         # Selecciono las primeras 3 columnas de cada fila
         for i in range(len(loaded_M_seq)):
