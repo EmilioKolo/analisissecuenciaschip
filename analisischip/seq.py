@@ -80,14 +80,30 @@ Guarda secuencias en .csv
 
         # Si i es 0, no hay overlap con la secuencia anterior y no se hace nada
         if i > 0:
-            # Si self.dict_range[chr_n][i+1][1] es mayor a pos_ini, hay overlap con la secuencia anterior
-            if self.dict_range[chr_n][i+1][1] > pos_ini:
+            # Si self.dict_range[chr_n][i-1][1] es mayor a pos_ini, hay overlap con la secuencia anterior
+            if self.dict_range[chr_n][i-1][1] > pos_ini:
                 overlap_antes = True;
-                nueva_pos_ini = self.dict_range[chr_n][i+1][0];
-                nueva_pos_end = max(self.dict_range[chr_n][i+1][1], pos_end);
+                nueva_pos_ini = self.dict_range[chr_n][i-1][0];
+                nueva_pos_end = max(self.dict_range[chr_n][i-1][1], pos_end);
         
+        # Si hay overlap antes y despues, uno los tres rangos en uno
+        if overlap_antes and overlap_despues:
+            nueva_pos_ini = self.dict_range[chr_n][i-1][0];
+            nueva_pos_end = max(self.dict_range[chr_n][i-1][1], pos_end, self.dict_range[chr_n][i+1][1]);
+            self.dict_range[chr_n] = self.dict_range[chr_n][:i-1] + [[nueva_pos_ini, nueva_pos_end]] + self.dict_range[chr_n][i+2:];
+            ####### FALTA actualizar self.M_seq
+        # Si solo hay overlap antes o despues, uno dos rangos
+        elif overlap_antes:
+            self.dict_range[chr_n] = self.dict_range[chr_n][:i-1] + [[nueva_pos_ini, nueva_pos_end]] + self.dict_range[chr_n][i+1:];
+            ####### FALTA actualizar self.M_seq
+        elif overlap_despues:
+            self.dict_range[chr_n] = self.dict_range[chr_n][:i] + [[nueva_pos_ini, nueva_pos_end]] + self.dict_range[chr_n][i+2:];
+            ####### FALTA actualizar self.M_seq
+        # Si no hay overlap ni antes ni despues, solo agrego el rango a self.M_seq
+        else:
+            ####### FALTA actualizar self.M_seq
+            pass
         ## FALTA:
-        ## Unir secuencias si hay overlap
         ## Actualizar self.M_seq en algun momento
         return self
 
