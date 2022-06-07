@@ -55,15 +55,23 @@ def _main():
     # Inicializo la clase
     NKX25_SU = seq_data('mm9', dict_genomas);
     ### PRUEBA
-    NKX25_SU.agregar_secuencia('chr1', 12312200, 12312600);
+    NKX25_SU.agregar_secuencia('chr1', 2200, 2600);
     print(NKX25_SU.dict_range)
-    NKX25_SU.agregar_secuencia('chr1', 32312200, 32312600);
+    print()
+    NKX25_SU.agregar_secuencia('chr2', 2100, 2700);
     print(NKX25_SU.dict_range)
-    NKX25_SU.agregar_secuencia('chr1', 42312200, 42312600);
+    print()
+    NKX25_SU.agregar_secuencia('chr1', 2500, 2900);
     print(NKX25_SU.dict_range)
+    print()
+    NKX25_SU.agregar_secuencia('chr1', 3500, 3900);
+    print(NKX25_SU.dict_range)
+    print()
+    NKX25_SU.agregar_secuencia('chr1', 1500, 1900);
+    print(NKX25_SU.dict_range)
+    print()
     #NKX25_SU.revisar_mult(carga_vacias=True);
     ###
-    
     print(NKX25_SU.M_seq)
 
     return NKX25_SU

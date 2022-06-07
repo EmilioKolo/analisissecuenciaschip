@@ -1,6 +1,5 @@
 # Generales
 import os
-from syslog import LOG_UPTO
 import time
 import copy
 import logging
@@ -45,22 +44,29 @@ Guarda secuencias en .csv
         # Despues revisa que no haya overlap con secuencia anterior y/o siguiente
         # Si hay overlap, extiende la secuencia correspondiente, une dos rangos o ignora el rango dado
 
+        ### Display
+        print('Revisando overlap en ' + str(chr_n) + ' para rango ' + str(pos_ini) + ' a ' + str(pos_end))
+
         # Booleano para saber si se encontro la posicion para el rango
         posicion_encontrada = False;
         # Contador para recorrer self.dict_range[chr_n]
         i = 0;
         largo_dict_chr_n = len(self.dict_range[chr_n]);
+        # Booleano para chequeos de overlap
+        ultima_posicion = False;
         # Ciclo para recorrer self.dict_range[chr_n] y agregar [pos_ini, pos_end] en el lugar correcto
         while (not posicion_encontrada) and i < largo_dict_chr_n:
             curr_range = self.dict_range[chr_n][i];
             # Si pos_ini es menor que el rango en posicion i, se aumenta i en 1
-            if pos_ini < curr_range[0]:
+            if pos_ini > curr_range[0]:
                 i = i+1;
                 # Si se llega a la ultima posicion, se agrega [pos_ini, pos_end] al final
                 if i == largo_dict_chr_n:
                     self.dict_range[chr_n].append([pos_ini, pos_end]);
+                    ultima_posicion = True;
             # En el momento que se encuentre un rango con pos_ini mayor al dado, se carga el rango
             else:
+                posicion_encontrada = True;
                 # Se agrega [pos_ini, pos_end] en la posicion i, moviendo el rango que estaba en esa posicion para arriba
                 self.dict_range[chr_n] = self.dict_range[chr_n][:i] + [[pos_ini, pos_end]] + self.dict_range[chr_n][i:];
 
@@ -69,17 +75,21 @@ Guarda secuencias en .csv
         overlap_despues = False;
         nueva_pos_ini = None;
         nueva_pos_end = None;
-        # Si i es la ultima posicion de self.dict_range[chr_n], no hay overlap con la secuencia siguiente y no se hace nada
-        ultima_posicion = (i == len(self.dict_range[chr_n])-1);
+        # Si el rango agregado esta en la ultima posicion, no hay rango siguiente y no se hace este chequeo
         if not ultima_posicion:
+            ##print('Revisando overlap_despues')
+            ##print('self.dict_range[chr_n][i+1][0] para i=' + str(i)+ ' es ' + str(self.dict_range[chr_n][i+1][0]))
+            ##print('Rango: (' +str(pos_ini) + ',' + str(pos_end) + ')')
             # Si self.dict_range[chr_n][i+1][0] es menor a pos_end, hay overlap con la secuencia siguiente
             if self.dict_range[chr_n][i+1][0] < pos_end:
                 overlap_despues = True;
                 nueva_pos_ini = pos_ini;
                 nueva_pos_end = max(self.dict_range[chr_n][i+1][1], pos_end);
-
-        # Si i es 0, no hay overlap con la secuencia anterior y no se hace nada
+        # Si i es 0, no hay rango anterior y no se hace este chequeo
         if i > 0:
+            ##print('Revisando overlap_antes')
+            ##print('self.dict_range[chr_n][i-1][1] para i=' + str(i)+ ' es ' + str(self.dict_range[chr_n][i-1][1]) + ')')
+            ##print('Rango: (' +str(pos_ini) + ',' + str(pos_end))
             # Si self.dict_range[chr_n][i-1][1] es mayor a pos_ini, hay overlap con la secuencia anterior
             if self.dict_range[chr_n][i-1][1] > pos_ini:
                 overlap_antes = True;
@@ -91,28 +101,34 @@ Guarda secuencias en .csv
             nueva_pos_ini = self.dict_range[chr_n][i-1][0];
             nueva_pos_end = max(self.dict_range[chr_n][i-1][1], pos_end, self.dict_range[chr_n][i+1][1]);
             self.dict_range[chr_n] = self.dict_range[chr_n][:i-1] + [[nueva_pos_ini, nueva_pos_end]] + self.dict_range[chr_n][i+2:];
-            ####### FALTA actualizar self.M_seq
         # Si solo hay overlap antes o despues, uno dos rangos
         elif overlap_antes:
             self.dict_range[chr_n] = self.dict_range[chr_n][:i-1] + [[nueva_pos_ini, nueva_pos_end]] + self.dict_range[chr_n][i+1:];
-            ####### FALTA actualizar self.M_seq
         elif overlap_despues:
             self.dict_range[chr_n] = self.dict_range[chr_n][:i] + [[nueva_pos_ini, nueva_pos_end]] + self.dict_range[chr_n][i+2:];
-            ####### FALTA actualizar self.M_seq
-        # Si no hay overlap ni antes ni despues, solo agrego el rango a self.M_seq
-        else:
-            ####### FALTA actualizar self.M_seq
-            pass
-        ## FALTA:
-        ## Actualizar self.M_seq en algun momento
+        # Si no hay overlap ni antes ni despues, el rango queda agregado
+
+        ### Display
+        ##print('Overlap antes: ' + str(overlap_antes))
+        ##print('Overlap despues: ' + str(overlap_despues))
+        return self
+
+
+    def actualizar_M_seq(self, buscar_seq):
+        # Actualiza M_seq en base a los rangos registrados en dict_range
+
+        ########### FALTA
         return self
 
 
     def agregar_secuencia(self, chr_n, pos_ini, pos_end, seq=''):
-        # Agrega una secuencia a self.dict_range y self.M_seq
+        # Agrega una secuencia a self.dict_range
         # Revisa que no haya overlap con ninguna secuencia en self.dict_range
-        # Si hay overlap, hace chequeo, merge y actualiza self.M_seq
-        # Si no hay overlap, agrega el rango al diccionario y la matriz
+        # Si hay overlap, hace chequeo y merge
+        # Si no hay overlap, agrega el rango al diccionario
+
+        ### Display
+        print('Empezando parseo de rango ' + str(chr_n) + ' : ' + str(pos_ini) + ' - ' + str(pos_end))
 
         # Parseo el rango para que pos_ini sea el menor numero y pos_end, el mayor
         seq_range = [min(int(pos_ini), int(pos_end)), max(int(pos_ini), int(pos_end))];
@@ -121,14 +137,11 @@ Guarda secuencias en .csv
             # Si chr_n ya esta en self.dict_range.keys(), tengo que chequear que no haya overlap
             self._revisar_overlap_dict(chr_n, seq_range[0], seq_range[1], seq);
         else:
+            print('Rango agregado a dict_range directamente')
             # Si chr_n no esta en self.dict_range.keys(), agrego la key y el rango
             self.dict_range[chr_n] = [];
             self.dict_range[chr_n].append(seq_range);
-            self.M_seq.append([chr_n, seq_range[0], seq_range[1], seq]);
-        
-        ## FALTA:
-        ## Unir secuencias si hay overlap
-        ## Actualizar self.M_seq en algun momento
+
         return self
 
 
@@ -486,6 +499,25 @@ def IDchr(chromosome,genome='hg19'):
         logging.error('No se pudo encontrar cromosoma ' + str(chromosome))
     return ret
 
+
+def max_range(M_num):
+    # Recibe una matriz que sea una lista de listas de numeros
+    # Devuelve el rango que cubra todos los numeros en M_num
+
+    # Inicializo los valores inicial y final
+    num_min = '';
+    num_max = '';
+    # Recorro M_num y busco el mayor y el menor numero
+    for i in M_num:
+        if num_min == '':
+            num_min = min(i);
+        else:
+            num_min = min(min(i), num_min);
+        if num_max == '':
+            num_max = max(i);
+        else:
+            num_max = max(max(i),num_max);
+    return [num_min, num_max]
 
 def merge_overlapping_intervals(L_intervals):
     # Recibe una lista de intervalos y devuelve una lista de intervalos sin overlap
