@@ -1,7 +1,7 @@
 
 import os
 from pyensembl import EnsemblRelease
-from Bio import Entrez, SeqIO
+from Bio import Entrez
 import logging
 from analisischip import seq_data
 

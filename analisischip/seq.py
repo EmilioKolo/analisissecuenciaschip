@@ -1,10 +1,7 @@
 # Generales
 import os
 import time
-import copy
 import logging
-from random import shuffle
-from pyensembl import EnsemblRelease
 # Analisis de secuencias y genomas
 from Bio import Entrez, SeqIO
 
