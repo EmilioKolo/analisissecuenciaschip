@@ -35,8 +35,10 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
     # ~ cargar_rango(chr_n, pos_ini, pos_end): Carga un rango de secuencias en self.dict_range (y hace muchos chequeos)
     # X _chr_check(chr_n): Al cargar, ver si el cromosoma esta presente en self.dict_range o en carpeta path_fasta
     # X _chr_file_check(chr_n): Busca el archivo en carpeta path_fasta 
-    # ~ _download_chr(chr_n, retries): Ver consulta_secuencia_chr_retries() en 14-PruebaDescargarChr.py
+    # ~ _download_chr(chr_n, retries): Ver consulta_secuencia_chr() en 14-PruebaDescargarChr.py
+    # - _buscar_chrid(self, chr_n): Consigue chrID en base a chr_n (NO SE COMO)
         # Pensar formas para conseguir chrID en base a chr_n
+    # - _consulta_entrez_chr(chr_id): Consigue el elemento correspondiente al cromosoma con SeqIO
     # - _check_overlap(chr_n, pos_ini, pos_end): Revisa que no haya overlap (ver funciones armadas en este archivo)
     # - cargar_bed(archivo): Carga todos los rangos en un archivo de output de ChIP-seq
     # - cargar_promotores_genoma(rango): Carga todos los rangos alrededor de promotores de genes
