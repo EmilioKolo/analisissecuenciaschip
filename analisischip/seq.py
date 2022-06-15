@@ -27,22 +27,210 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         self.genome = genome_element;
         self.path_fasta = path_fasta;
         if path_fasta == '':
-            logging.warning('No se definio path_fasta. Se buscan y descargan archivos de secuencia en directorio actual.')
+            logging.warning('No se definio path_fasta. Se buscan y descargan archivos de secuencia en directorio actual.');
         return None
 
 
     ## FUNCIONES:
-    # cargar_rango(chr_n, pos_ini, pos_end): Carga un rango de secuencias en self.dict_range (y hace muchos chequeos)
-    # _chr_check(chr_n): Al cargar, ver si el cromosoma esta presente en self.dict_range o en carpeta path_fasta
-    # _chr_file_check(chr_n): Busca el archivo en carpeta path_fasta 
-    # _download_chr(chrID, retries): Ver consulta_secuencia_chr_retries() en 14-PruebaDescargarChr.py
+    # ~ cargar_rango(chr_n, pos_ini, pos_end): Carga un rango de secuencias en self.dict_range (y hace muchos chequeos)
+    # X _chr_check(chr_n): Al cargar, ver si el cromosoma esta presente en self.dict_range o en carpeta path_fasta
+    # X _chr_file_check(chr_n): Busca el archivo en carpeta path_fasta 
+    # ~ _download_chr(chr_n, retries): Ver consulta_secuencia_chr_retries() en 14-PruebaDescargarChr.py
         # Pensar formas para conseguir chrID en base a chr_n
-    # _check_overlap(chr_n, pos_ini, pos_end): Revisa que no haya overlap (ver funciones armadas en este archivo)
-    # cargar_bed(archivo): Carga todos los rangos en un archivo de output de ChIP-seq
-    # cargar_promotores_genoma(rango): Carga todos los rangos alrededor de promotores de genes
-    # Con funcion cargar_rango() funcional, hacer cargar_bed() y cargar_promotores_genoma(rango)
+    # - _check_overlap(chr_n, pos_ini, pos_end): Revisa que no haya overlap (ver funciones armadas en este archivo)
+    # - cargar_bed(archivo): Carga todos los rangos en un archivo de output de ChIP-seq
+    # - cargar_promotores_genoma(rango): Carga todos los rangos alrededor de promotores de genes
+    # - Con funcion cargar_rango() funcional, hacer cargar_bed() y cargar_promotores_genoma(rango)
 
 
+    def _buscar_chrid(self, chr_n):
+        # Busca el id de nucleotide para chr_n en self.genome
+        ############# FALTA
+        return ''
+
+
+    def _chr_check(self, chr_n):
+        # Revisa si chr_n esta presente en self.dict_range o en carpeta self.path_fasta
+        # Si chr_n esta presente o se puede agregar, devuelve True
+        # Si algo falla, devuelve False
+
+        # Inicializo el booleano que se devuelve
+        ret = False;
+        # Si chr_n esta en self.dict_range.keys(), no hago nada y devuelvo True
+        if chr_n in self.dict_range.keys():
+            ret = True;
+        # Si chr_n no esta en self.dict_range.keys(), reviso carpeta self.path_fasta con self._chr_file_check()
+        elif self._chr_file_check(chr_n):
+            # Una vez me aseguro que el archivo esta presente, agrego chr_n a self.dict_range
+            self.dict_range[chr_n] = [];
+            ret = True;
+        return ret
+
+
+    def _chr_file_check(self, chr_n):
+        # Busca el archivo correspondiente a chr_n en carpeta path_fasta 
+        # Devuelve True si el archivo esta presente o si se descarga correctamente
+        # Devuelve False si el archivo no esta presente y no se pudo descargar por una u otra razon
+
+        # Defino el nombre y direccion del archivo a buscar
+        nom_arch = self.genome_name + '_' + chr_n + '.fasta';
+        if self.path_fasta == '':
+            dir_arch = '.\\' + nom_arch;
+        else:
+            dir_arch = os.path.join(self.path_fasta, nom_arch);
+        # Busco el archivo self.genome_name + '_' + chr_n + '.fasta' en self.path_fasta
+        try:
+            # Si esta presente, no hago nada
+            F = open(dir_arch, 'r');
+            F.close();
+            ret = True;
+        except:
+            logging.warning('Archivo ' + nom_arch + ' no encontrado en la carpeta dada.');
+            # Si chr_n no esta presente, defino chr_id en base a chr_n para descargarlo
+            chr_id = self._buscar_chrid(chr_n);
+            # Si no encuentro chr_id, tiro error y devuelvo False
+            if chr_id == '':
+                logging.error('Cromosoma ' + chr_n + ' no encontrado en lista de IDs para buscar en nucleotide.');
+                ret = False;
+            # Si encuentro chr_id, trato de bajarlo con self._download_chr()
+            else:
+                ret = self._download_chr(chr_id);
+        return ret
+
+
+    def _consulta_entrez_chr(self, chr_id):
+        # 
+        ### FALTA:
+        # Ver consulta_secuencia_chr_retries() en 14-PruebaDescargarChr.py
+        return ''
+
+
+    def _download_chr(self, chr_id, retries=10):
+        # Descarga el archivo .fasta correspondiente a chr_n para self.genome_name
+        # Devuelve True si puede descargar el archivo
+        # Devuelve False si falla la descarga
+
+        # Inicializo el booleano que se devuelve
+        ret = False;
+        # Chequeo para retries < 1
+        if retries < 1:
+            retries = 1;
+        
+        # Inicializo las variables del ciclo while
+        encontrado = False;
+        tries = 0;
+        # Repito maximo retries veces o hasta que se encuentre
+        while not encontrado and tries < retries:
+            try:
+                record_chr = self._consulta_entrez_chr(chr_id);
+                ### FALTA:
+                # Si puedo descargar record_chr, lo guardo en archivo .fasta dentro de self.path_fasta
+                ### HACER ###
+                # Una vez guardado, registro encontrado = True
+                encontrado = True;
+            except:
+                tries = tries + 1;
+                print('Fallo intento ' + str(tries) + '.')
+        ### FALTA:
+        # Guardar record_chr en archivo .fasta
+        return ret
+
+    def cargar_rango(self, chr_n, pos_ini, pos_end):
+        # Carga un rango de secuencias en self.dict_range (y hace muchos chequeos)
+        ### FALTA:
+        # Uso self._chr_check(chr_n) para revisar que el cromosoma este presente
+        self._chr_check(chr_n);
+        # 
+        return self
+
+
+#################################### FUNCIONES ####################################
+
+
+def _main_test():
+    # Funcion para probar funciones en ejecucion del archivo
+
+    L_out = [];
+    
+    return L_out
+
+
+##################################### PRUEBAS #####################################
+
+
+### Funciones para pruebas
+
+def ConsultaSecuencia(id_chr, seq_start, seq_finish, strand=1, sleep_time=60):
+    # Devuelve una secuencia dado un ID de cromosoma (incluye info de especie) y posicion inicial/final
+    time.sleep(0.1);
+    rec_seq = '';
+    try:
+        handle = Entrez.efetch(db='nucleotide', id=id_chr, rettype='fasta',
+                               strand=strand, seq_start=seq_start, seq_stop=seq_finish);
+        record = SeqIO.read(handle, 'fasta');
+        handle.close();
+        rec_seq = record.seq;
+    except:
+        logging.warning('Exception raised for chr ' + str(id_chr) + ' between positions ' + 
+                        str(seq_start) + ' and ' + str(seq_finish) + '.');
+        time.sleep(sleep_time);
+        try:
+            handle = Entrez.efetch(db='nucleotide', id=id_chr, rettype='fasta',
+                                   strand=strand, seq_start=seq_start, seq_stop=seq_finish);
+            record = SeqIO.read(handle, 'fasta');
+            handle.close();
+            rec_seq = record.seq;
+        except:
+            logging.error('Retry failed. Returning empty string.');
+    return rec_seq
+
+
+def IDchr(chromosome,genome='hg19'):
+    # Devuelve el ID de cromosoma para ConsultaSecuencia dado el numero de cromosoma y el genoma correspondiente
+    # Programado a mano, funciona solo con hg19 (humano) y mm9 (raton)
+    ret = '';
+    b = True;
+    if genome.lower() == 'hg19' or genome.lower() == 'human': # GRCh38.p13
+        dict_IDchr = {'1':'NC_000001.11', '2':'NC_000002.12', '3':'NC_000003.12', '4':'NC_000004.12',
+                      '5':'NC_000005.10', '6':'NC_000006.12', '7':'NC_000007.14', '8':'NC_000008.11',
+                      '9':'NC_000009.12', '10':'NC_000010.11', '11':'NC_000011.10', '12':'NC_000012.12',
+                      '13':'NC_000013.11', '14':'NC_000014.9', '15':'NC_000015.10', '16':'NC_000016.10',
+                      '17':'NC_000017.11', '18':'NC_000018.10', '19':'NC_000019.10', '20':'NC_000020.11',
+                      '21':'NC_000021.9', '22':'NC_000022.11', 'X':'NC_000023.11', 'Y':'NC_000024.10',
+                      'M':'NC_012920.1', 'MT':'NC_012920.1'};
+    elif genome.lower() == 'mm9' or genome.lower() == 'mouse': # MGSCv37
+        dict_IDchr = {'1':'NC_000067.5', '2':'NC_000068.6', '3':'NC_000069.5', '4':'NC_000070.5',
+                      '5':'NC_000071.5', '6':'NC_000072.5', '7':'NC_000073.5', '8':'NC_000074.5',
+                      '9':'NC_000075.5', '10':'NC_000076.5', '11':'NC_000077.5', '12':'NC_000078.5',
+                      '13':'NC_000079.5', '14':'NC_000080.5', '15':'NC_000081.5', '16':'NC_000082.5',
+                      '17':'NC_000083.5', '18':'NC_000084.5', '19':'NC_000085.5', 'X':'NC_000086.6',
+                      'Y':'NC_000087.6', 'M':'NC_005089.1', 'MT':'NC_005089.1'};
+    elif genome.lower() == 'mouse102' or genome.lower() == 'grcm38':
+        dict_IDchr = {'1':'CM000994.3', '10':'CM001003.3', '11':'CM001004.3', '12':'CM001005.3',
+                      '13':'CM001006.3', '14':'CM001007.3', '15':'CM001008.3', '16':'CM001009.3',
+                      '17':'CM001010.3', '18':'CM001011.3', '19':'CM001012.3', '2':'CM000995.3',
+                      '3':'CM000996.3', '4':'CM000997.3', '5':'CM000998.3', '6':'CM000999.3',
+                      '7':'CM001000.3', '8':'CM001001.3', '9':'CM001002.3', 'MT':'AY172335.1',
+                      'X':'CM001013.3', 'Y':'CM001014.3', 'M':'AY172335.1'};
+    else:
+        logging.error('No se pudo encontrar genoma ' + str(genome));
+        b = False;
+        dict_IDchr = {};
+
+    if str(chromosome).upper() in dict_IDchr.keys():
+        ret = dict_IDchr[str(chromosome).upper()];
+    elif b:
+        logging.error('No se pudo encontrar cromosoma ' + str(chromosome));
+    return ret
+
+
+###################################################################################
+######################################## OLD ######################################
+###################################################################################
+
+
+###################################### CLASES #####################################
+'''
     def _revisar_overlap_dict(self, chr_n, pos_ini, pos_end, seq):
         # Revisa que no haya overlap en self.dict_range[chr_n] para pos_ini, pos_end
         # Primero carga el rango [pos_ini, pos_end] en orden
@@ -377,7 +565,7 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
             p_final = p_final + ' Secuencias vacias: ' + str(seq_vacias) + '.';
         print(p_final);
         return self
-
+'''
 
 #################################### FUNCIONES ####################################
 
@@ -460,6 +648,7 @@ def max_range(M_num):
             num_max = max(max(i),num_max);
     return [num_min, num_max]
 
+
 def merge_overlapping_intervals(L_intervals):
     # Recibe una lista de intervalos y devuelve una lista de intervalos sin overlap
     # Une los intervalos que se superpongan
@@ -496,81 +685,9 @@ def range_overlap(range1, range2):
     return range1[1] >= range2[0]
 
 
-def _main_test():
-    # Funcion para probar funciones en ejecucion del archivo
-
-    L_out = [];
-    
-    return L_out
-
-
-##################################### PRUEBAS #####################################
-
-
-### Funciones para pruebas
-
-def ConsultaSecuencia(id_chr, seq_start, seq_finish, strand=1, sleep_time=60):
-    # Devuelve una secuencia dado un ID de cromosoma (incluye info de especie) y posicion inicial/final
-    time.sleep(0.1);
-    rec_seq = '';
-    try:
-        handle = Entrez.efetch(db='nucleotide', id=id_chr, rettype='fasta',
-                               strand=strand, seq_start=seq_start, seq_stop=seq_finish);
-        record = SeqIO.read(handle, 'fasta');
-        handle.close();
-        rec_seq = record.seq;
-    except:
-        logging.warning('Exception raised for chr ' + str(id_chr) + ' between positions ' + 
-                        str(seq_start) + ' and ' + str(seq_finish) + '.');
-        time.sleep(sleep_time);
-        try:
-            handle = Entrez.efetch(db='nucleotide', id=id_chr, rettype='fasta',
-                                   strand=strand, seq_start=seq_start, seq_stop=seq_finish);
-            record = SeqIO.read(handle, 'fasta');
-            handle.close();
-            rec_seq = record.seq;
-        except:
-            logging.error('Retry failed. Returning empty string.');
-    return rec_seq
-
-
-def IDchr(chromosome,genome='hg19'):
-    # Devuelve el ID de cromosoma para ConsultaSecuencia dado el numero de cromosoma y el genoma correspondiente
-    # Programado a mano, funciona solo con hg19 (humano) y mm9 (raton)
-    ret = '';
-    b = True;
-    if genome.lower() == 'hg19' or genome.lower() == 'human': # GRCh38.p13
-        dict_IDchr = {'1':'NC_000001.11', '2':'NC_000002.12', '3':'NC_000003.12', '4':'NC_000004.12',
-                      '5':'NC_000005.10', '6':'NC_000006.12', '7':'NC_000007.14', '8':'NC_000008.11',
-                      '9':'NC_000009.12', '10':'NC_000010.11', '11':'NC_000011.10', '12':'NC_000012.12',
-                      '13':'NC_000013.11', '14':'NC_000014.9', '15':'NC_000015.10', '16':'NC_000016.10',
-                      '17':'NC_000017.11', '18':'NC_000018.10', '19':'NC_000019.10', '20':'NC_000020.11',
-                      '21':'NC_000021.9', '22':'NC_000022.11', 'X':'NC_000023.11', 'Y':'NC_000024.10',
-                      'M':'NC_012920.1', 'MT':'NC_012920.1'};
-    elif genome.lower() == 'mm9' or genome.lower() == 'mouse': # MGSCv37
-        dict_IDchr = {'1':'NC_000067.5', '2':'NC_000068.6', '3':'NC_000069.5', '4':'NC_000070.5',
-                      '5':'NC_000071.5', '6':'NC_000072.5', '7':'NC_000073.5', '8':'NC_000074.5',
-                      '9':'NC_000075.5', '10':'NC_000076.5', '11':'NC_000077.5', '12':'NC_000078.5',
-                      '13':'NC_000079.5', '14':'NC_000080.5', '15':'NC_000081.5', '16':'NC_000082.5',
-                      '17':'NC_000083.5', '18':'NC_000084.5', '19':'NC_000085.5', 'X':'NC_000086.6',
-                      'Y':'NC_000087.6', 'M':'NC_005089.1', 'MT':'NC_005089.1'};
-    elif genome.lower() == 'mouse102' or genome.lower() == 'grcm38':
-        dict_IDchr = {'1':'CM000994.3', '10':'CM001003.3', '11':'CM001004.3', '12':'CM001005.3',
-                      '13':'CM001006.3', '14':'CM001007.3', '15':'CM001008.3', '16':'CM001009.3',
-                      '17':'CM001010.3', '18':'CM001011.3', '19':'CM001012.3', '2':'CM000995.3',
-                      '3':'CM000996.3', '4':'CM000997.3', '5':'CM000998.3', '6':'CM000999.3',
-                      '7':'CM001000.3', '8':'CM001001.3', '9':'CM001002.3', 'MT':'AY172335.1',
-                      'X':'CM001013.3', 'Y':'CM001014.3', 'M':'AY172335.1'};
-    else:
-        logging.error('No se pudo encontrar genoma ' + str(genome))
-        b = False;
-        dict_IDchr = {};
-
-    if str(chromosome).upper() in dict_IDchr.keys():
-        ret = dict_IDchr[str(chromosome).upper()];
-    elif b:
-        logging.error('No se pudo encontrar cromosoma ' + str(chromosome))
-    return ret
+###################################################################################
+####################################### MAIN ######################################
+###################################################################################
 
 
 output_dump = [];
