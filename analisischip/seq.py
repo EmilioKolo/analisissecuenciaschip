@@ -12,27 +12,35 @@ from Bio import Entrez, SeqIO
 class seq_data(object):
     '''
 Clase para cargar datos de secuencia en un genoma dado
-Almacena secuencias en formato chr_n, pos_ini, pos_end, seq
-Puede almacenar chr_n, pos_ini, pos_end en preparacion para buscar seq
-Guarda secuencias en .csv
+Almacena secuencias en formato chr_n, pos_ini, pos_end
+Descarga archivos .fasta con los cromosomas necesarios para las secuencias usadas
     '''
-    def __init__(self, genome_name, dict_genomas):
+    def __init__(self, genome_name, genome_element, path_fasta=''):
         # M_seq almacena todos los rangos de secuencias
-        # Rangos almacenados en formato chr_n, pos_ini, pos_end, seq
-        # seq puede ser un string vacio
+        # Rangos almacenados en formato chr_n, pos_ini, pos_end
+        # Secuencia almacenada en archivos en path a definir
 
-        # M_seq registra los rangos y sus correspondientes secuencias
-        self.M_seq = [];
         # dict_range registra los rangos por chr_n
         self.dict_range = {};
-        if genome_name in dict_genomas.keys():
-            self.genome_name = genome_name;
-            self.genome = dict_genomas[genome_name];
-        else:
-            logging.warning('Genoma "' + str(genome_name) + '" no reconocido. Se usa mm9 de raton como default.');
-            self.genome_name = 'mm9';
-            self.genome = dict_genomas['mm9'];
+        # Registro el genoma y su nombre
+        self.genome_name = genome_name;
+        self.genome = genome_element;
+        self.path_fasta = path_fasta;
+        if path_fasta == '':
+            logging.warning('No se definio path_fasta. Se buscan y descargan archivos de secuencia en directorio actual.')
         return None
+
+
+    ## FUNCIONES:
+    # cargar_rango(chr_n, pos_ini, pos_end): Carga un rango de secuencias en self.dict_range (y hace muchos chequeos)
+    # _chr_check(chr_n): Al cargar, ver si el cromosoma esta presente en self.dict_range o en carpeta path_fasta
+    # _chr_file_check(chr_n): Busca el archivo en carpeta path_fasta 
+    # _download_chr(chrID, retries): Ver consulta_secuencia_chr_retries() en 14-PruebaDescargarChr.py
+        # Pensar formas para conseguir chrID en base a chr_n
+    # _check_overlap(chr_n, pos_ini, pos_end): Revisa que no haya overlap (ver funciones armadas en este archivo)
+    # cargar_bed(archivo): Carga todos los rangos en un archivo de output de ChIP-seq
+    # cargar_promotores_genoma(rango): Carga todos los rangos alrededor de promotores de genes
+    # Con funcion cargar_rango() funcional, hacer cargar_bed() y cargar_promotores_genoma(rango)
 
 
     def _revisar_overlap_dict(self, chr_n, pos_ini, pos_end, seq):
@@ -433,6 +441,74 @@ def complemento_secuencia(seq, adn=True):
     return(ret_seq)
 
 
+def max_range(M_num):
+    # Recibe una matriz que sea una lista de listas de numeros
+    # Devuelve el rango que cubra todos los numeros en M_num
+
+    # Inicializo los valores inicial y final
+    num_min = '';
+    num_max = '';
+    # Recorro M_num y busco el mayor y el menor numero
+    for i in M_num:
+        if num_min == '':
+            num_min = min(i);
+        else:
+            num_min = min(min(i), num_min);
+        if num_max == '':
+            num_max = max(i);
+        else:
+            num_max = max(max(i),num_max);
+    return [num_min, num_max]
+
+def merge_overlapping_intervals(L_intervals):
+    # Recibe una lista de intervalos y devuelve una lista de intervalos sin overlap
+    # Une los intervalos que se superpongan
+
+    # Ordeno la lista de rangos por su primer elemento
+    L_in = sorted(L_intervals, key=lambda x: x[0]);
+    # Inicializo la variable que se devuelve
+    L_out = [];
+
+    # Solo agrego algo a L_out si L_in tiene mas de un elemento
+    if len(L_in)>0:
+        L_out.append(L_in[0][:]);
+        # Recorro L_in a partir del segundo elemento
+        for i in range(1,len(L_in)):
+            # Defino el proximo rango 
+            curr_range = L_in[i];
+            # Agarro el ultimo elemento de L_out (para hacer merge de ser necesario)
+            pop_range = L_out.pop();
+            # Si hay overlap, hago merge
+            if range_overlap(pop_range, curr_range):
+                # merged_range siempre empieza con pop_range[0] porque esta ordenado de esa manera
+                merged_range = [pop_range[0], max(pop_range[1], curr_range[1])];
+                L_out.append(merged_range[:]);
+            # Si no hay overlap, devuelvo pop_range a L_out y agrego curr_range al final
+            else:
+                L_out.append(pop_range[:]);
+                L_out.append(curr_range[:]);
+    return L_out
+
+
+def range_overlap(range1, range2):
+    # Revisa si dos rangos tienen overlap
+    # range1[0] es el numero mas bajo dado
+    return range1[1] >= range2[0]
+
+
+def _main_test():
+    # Funcion para probar funciones en ejecucion del archivo
+
+    L_out = [];
+    
+    return L_out
+
+
+##################################### PRUEBAS #####################################
+
+
+### Funciones para pruebas
+
 def ConsultaSecuencia(id_chr, seq_start, seq_finish, strand=1, sleep_time=60):
     # Devuelve una secuencia dado un ID de cromosoma (incluye info de especie) y posicion inicial/final
     time.sleep(0.1);
@@ -496,81 +572,6 @@ def IDchr(chromosome,genome='hg19'):
         logging.error('No se pudo encontrar cromosoma ' + str(chromosome))
     return ret
 
-
-def max_range(M_num):
-    # Recibe una matriz que sea una lista de listas de numeros
-    # Devuelve el rango que cubra todos los numeros en M_num
-
-    # Inicializo los valores inicial y final
-    num_min = '';
-    num_max = '';
-    # Recorro M_num y busco el mayor y el menor numero
-    for i in M_num:
-        if num_min == '':
-            num_min = min(i);
-        else:
-            num_min = min(min(i), num_min);
-        if num_max == '':
-            num_max = max(i);
-        else:
-            num_max = max(max(i),num_max);
-    return [num_min, num_max]
-
-def merge_overlapping_intervals(L_intervals):
-    # Recibe una lista de intervalos y devuelve una lista de intervalos sin overlap
-    # Une los intervalos que se superpongan
-
-    # Ordeno la lista de rangos por su primer elemento
-    L_in = sorted(L_intervals, key=lambda x: x[0]);
-    # Inicializo la variable que se devuelve
-    L_out = [];
-
-    # Solo agrego algo a L_out si L_in tiene mas de un elemento
-    if len(L_in)>0:
-        L_out.append(L_in[0][:]);
-        # Recorro L_in a partir del segundo elemento
-        for i in range(1,len(L_in)):
-            # Defino el proximo rango 
-            curr_range = L_in[i];
-            # Agarro el ultimo elemento de L_out (para hacer merge de ser necesario)
-            pop_range = L_out.pop();
-            # Si hay overlap, hago merge
-            if range_overlap(pop_range, curr_range):
-                # merged_range siempre empieza con pop_range[0] porque esta ordenado de esa manera
-                merged_range = [pop_range[0], max(pop_range[1], curr_range[1])];
-                L_out.append(merged_range[:]);
-            # Si no hay overlap, devuelvo pop_range a L_out y agrego curr_range al final
-            else:
-                L_out.append(pop_range[:]);
-                L_out.append(curr_range[:]);
-    return L_out
-
-
-def range_overlap(range1, range2):
-    # Revisa si dos rangos tienen overlap
-    # range1[0] es el numero mas bajo dado
-    return range1[1] >= range2[0]
-
-
-def _main_test():
-    # Funcion para probar funciones en ejecucion del archivo
-
-    L_out = [];
-    
-    #L_test = [[7,10],[4,5],[1,3],[3,6],[11,13],[11,14]];
-    #L_out = _test_merge(L_test);
-
-    return L_out
-
-
-def _test_merge(L_test):
-    L_out = merge_overlapping_intervals(L_test);
-    print('L_in=' + str(L_test))
-    print('L_out=' + str(L_out))
-    return L_out
-
-
-##################################### PRUEBAS #####################################
 
 output_dump = [];
 
