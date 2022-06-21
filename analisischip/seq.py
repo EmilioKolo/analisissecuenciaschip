@@ -15,7 +15,7 @@ Clase para cargar datos de secuencia en un genoma dado
 Almacena secuencias en formato chr_n, pos_ini, pos_end
 Descarga archivos .fasta con los cromosomas necesarios para las secuencias usadas
     '''
-    def __init__(self, genome_name, genome_element, path_fasta=''):
+    def __init__(self, genome_name, path_fasta='', genome_element=''):
         # M_seq almacena todos los rangos de secuencias
         # Rangos almacenados en formato chr_n, pos_ini, pos_end
         # Secuencia almacenada en archivos en path a definir
