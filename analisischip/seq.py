@@ -45,9 +45,10 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
     # X _consulta_entrez_chr(chr_id): Consigue el elemento correspondiente al cromosoma con SeqIO
     # ? _check_overlap(chr_n, pos_ini, pos_end): Revisa que no haya overlap (ver funciones armadas en este archivo)
     # X _consulta_secuencia_fasta(chr_n, pos_ini, pos_end): Devuelve la secuencia consultando en los archivos .fasta
-    # - cargar_bed(archivo): Carga todos los rangos en un archivo de output de ChIP-seq
-    # - cargar_promotores_genoma(rango): Carga todos los rangos alrededor de promotores de genes
     # - Con funcion cargar_rango() funcional, hacer cargar_bed() y cargar_promotores_genoma(rango)
+        # - cargar_bed(archivo): Carga todos los rangos en un archivo de output de ChIP-seq
+        # - cargar_promotores_genoma(rango): Carga todos los rangos alrededor de promotores de genes
+
 
 
     def _agregar_chrid(self, chr_id, chr_n):
@@ -369,7 +370,7 @@ def _main_test():
     print('>Inicializando base_test.')
     base_test = seq_data('mm9', path_fasta=path_usado); # D:\\Archivos doctorado\\Genomas\\ 
     print('>base_test inicializado.')
-    
+
     #print('>base_test inicializado. Probando _consulta_secuencia_fasta().')
     #pos_ini = 10000000;
     #pos_end = pos_ini + 100;
@@ -398,9 +399,6 @@ def _main_test():
 ###################################################################################
 ######################################## OLD ######################################
 ###################################################################################
-
-
-#################################### FUNCIONES ####################################
 
 
 def complemento(N,adn=True):
