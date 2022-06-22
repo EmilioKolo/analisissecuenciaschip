@@ -15,10 +15,11 @@ Clase para cargar datos de secuencia en un genoma dado
 Almacena secuencias en formato chr_n, pos_ini, pos_end
 Descarga archivos .fasta con los cromosomas necesarios para las secuencias usadas
     '''
-    def __init__(self, genome_name, genome_element, path_fasta=''):
+    def __init__(self, genome_name, genome_element='', path_fasta=''):
         # M_seq almacena todos los rangos de secuencias
         # Rangos almacenados en formato chr_n, pos_ini, pos_end
         # Secuencia almacenada en archivos en path a definir
+        # Genome element sirve para acelerar cosas pero es necesario si no se corre cargar_promotores_genoma()
 
         # dict_range registra los rangos por chr_n
         self.dict_range = {};
@@ -256,8 +257,26 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
 def _main_test():
     # Funcion para probar funciones en ejecucion del archivo
 
+    # Inicializo la variable que se devuelve
     L_out = [];
     
+    # Paso datos de usuario a Entrez
+    Entrez.email = 'ekolomenski@gmail.com';
+    Entrez.api_key = '9bccbd4949f226a5930868df36c211e8b408';
+
+    # Pruebo inicializar seq_data
+    print('>Inicializando base_test.')
+    base_test = seq_data('mm9'); # D:\\Archivos doctorado\\Genomas\\ 
+    print('>base_test inicializado. Cargando rango en chr1.')
+    base_test.cargar_rango('chr1',1000100,1010100);
+    print('>Primer rango cargado en chr1. Cargando segundo rango.')
+    base_test.cargar_rango('chr1',1200100,1210100);
+    print('>Segundo rango cargado en chr1. Cargando rango en chr2.')
+    base_test.cargar_rango('chr2',1000100,1010100);
+    print('>Rango cargado en chr2. Devolviendo dict_range en base_test')
+    print(base_test.dict_range)
+
+    L_out = base_test;
     return L_out
 
 
