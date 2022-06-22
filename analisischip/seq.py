@@ -44,6 +44,7 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
     # X _agregar_chrid(chr_id, chr_n): Revisa que chr_n no este en self.dict_chrid y agrega chr_id si no esta
     # X _consulta_entrez_chr(chr_id): Consigue el elemento correspondiente al cromosoma con SeqIO
     # ? _check_overlap(chr_n, pos_ini, pos_end): Revisa que no haya overlap (ver funciones armadas en este archivo)
+    # X _consulta_secuencia_fasta(chr_n, pos_ini, pos_end): Devuelve la secuencia consultando en los archivos .fasta
     # - cargar_bed(archivo): Carga todos los rangos en un archivo de output de ChIP-seq
     # - cargar_promotores_genoma(rango): Carga todos los rangos alrededor de promotores de genes
     # - Con funcion cargar_rango() funcional, hacer cargar_bed() y cargar_promotores_genoma(rango)
@@ -145,11 +146,7 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         # Devuelve False si el archivo no esta presente y no se pudo descargar por una u otra razon
 
         # Defino el nombre y direccion del archivo a buscar
-        nom_arch = self.genome_name + '_' + chr_n + '.fasta';
-        if self.path_fasta == '':
-            dir_arch = '.\\' + nom_arch;
-        else:
-            dir_arch = os.path.join(self.path_fasta, nom_arch);
+        dir_arch, nom_arch = self._dir_arch(chr_n);
         # Busco el archivo self.genome_name + '_' + chr_n + '.fasta' en self.path_fasta
         try:
             # Si esta presente, no hago nada
@@ -168,6 +165,108 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
             else:
                 ret = self._download_chr(chr_n);
         return ret
+
+
+    def _consulta_secuencia_fasta(self, chr_n, pos_ini, pos_end):
+        # Consulta la secuencia para chr_n entre pos_ini y pos_end de los .fasta
+
+        # Inicializo la variable que se devuelve
+        seq = '';
+
+        # Defino el nombre y direccion del archivo a buscar
+        dir_arch, nom_arch = self._dir_arch(chr_n);
+        # Intento abrir el archivo correspondiente
+        try:
+            # Abro el archivo para que tire error si no existe
+            F = open(dir_arch, 'r');
+            F.close();
+            # Abro el archivo con seqIO para extraer secuencia
+            seq_fasta = self._leer_fasta_chr(dir_arch);
+
+            # Selecciono el rango y lo agrego a seq
+            seq = seq_fasta[pos_ini-1:pos_end].seq;
+        except:
+            logging.warning('Archivo ' + nom_arch + ' no encontrado en la carpeta dada.');
+            # Si chr_n no esta presente, defino chr_id en base a chr_n para descargarlo
+            chr_id = self._buscar_chrid(chr_n);
+            # Si no encuentro chr_id, tiro error
+            if chr_id == '':
+                logging.error('Cromosoma ' + chr_n + ' no encontrado en lista de IDs para buscar en nucleotide.');
+                encontrado = False;
+            # Si encuentro chr_id, trato de bajarlo con self._download_chr()
+            else:
+                encontrado = self._download_chr(chr_n);
+            # Si se pudo descargar el archivo, vuelvo a correr _consulta_secuencia_fasta()
+            if encontrado:
+                seq = self._consulta_secuencia_fasta(chr_n, pos_ini, pos_end);
+        return seq
+
+
+    def _consulta_secuencia_entrez(self, chr_n, pos_ini, pos_end):
+        # Confirma la secuencia para chr_n entre pos_ini y pos_end usando Entrez
+
+        # Inicializo la variable que se devuelve
+        seq = '';
+        # Defino chr_id en base a chr_n
+        chr_id = self._buscar_chrid(chr_n);
+        # Defino un tiempo para el retry y por si quiero mandar muchas consultas seguidas
+        sleep_time = 0.2;
+        retry_time = 10;
+        # Inicializo un timer para no mandar demasiadas consultas
+        time.sleep(sleep_time);
+        # Uso try para intentar obtener la secuencia
+        try:
+            # Obtengo la secuencia directamente con Entrez.efetch()
+            handle = Entrez.efetch(db='nucleotide', id=chr_id, rettype='fasta', seq_start=pos_ini, seq_stop=pos_end);
+            record = SeqIO.read(handle, 'fasta');
+            handle.close();
+            seq = record.seq;
+        except:
+            logging.warning('Problemas con ' + str(chr_n) + ' entre posiciones ' + 
+                            str(pos_ini) + ' y ' + str(pos_end) + '.');
+            # Si falla, reintento despues de retry_time
+            time.sleep(retry_time);
+            try:
+                # Obtengo la secuencia directamente con Entrez.efetch()
+                handle = Entrez.efetch(db='nucleotide', id=chr_id, rettype='fasta', seq_start=pos_ini, seq_stop=pos_end);
+                record = SeqIO.read(handle, 'fasta');
+                handle.close();
+                seq = record.seq;
+            except:
+                logging.error('Fallo el reintento. Devuelvo secuencia vacia.');
+        return seq
+
+
+    def _leer_fasta_chr(self, dir_arch):
+        # Lee el archivo .fasta en dir_arch y devuelve la secuencia
+        # Pensado para una secuencia, si hay mas de una tira error y devuelve la primera
+
+        # Abro el archivo con SeqIO
+        arch_fasta = SeqIO.parse(dir_arch, 'fasta');
+        # Inicializo la variable que se devuelve
+        L_out = [];
+        # Contador para revisar si hay mas de un registro
+        i = 0;
+        # Reviso si tiene mas de una secuencia
+        for record in arch_fasta:
+            i = i + 1;
+            L_out.append(record);
+        if i != 1:
+            logging.warning('Mas de un registro en el .fasta, se devuelve el primero.')
+        L_out = L_out[0];
+        return L_out
+
+
+    def _dir_arch(self, chr_n):
+        # Devuelve la direccion del archivo correspondiente a chr_n y el nombre del archivo
+
+        # Defino el nombre del archivo a buscar
+        nom_arch = self.genome_name + '_' + chr_n + '.fasta';
+        if self.path_fasta == '':
+            dir_arch = '.\\' + nom_arch;
+        else:
+            dir_arch = os.path.join(self.path_fasta, nom_arch);
+        return dir_arch, nom_arch
 
 
     def _consulta_entrez_chr(self, chr_id):
@@ -264,89 +363,36 @@ def _main_test():
     Entrez.email = 'ekolomenski@gmail.com';
     Entrez.api_key = '9bccbd4949f226a5930868df36c211e8b408';
 
+    # Defino la direccion del .fasta
+    path_usado = 'D:\\Archivos doctorado\\Genomas\\';
     # Pruebo inicializar seq_data
     print('>Inicializando base_test.')
-    base_test = seq_data('mm9'); # D:\\Archivos doctorado\\Genomas\\ 
-    print('>base_test inicializado. Cargando rango en chr1.')
-    base_test.cargar_rango('chr1',1000100,1010100);
-    print('>Primer rango cargado en chr1. Cargando segundo rango.')
-    base_test.cargar_rango('chr1',1200100,1210100);
-    print('>Segundo rango cargado en chr1. Cargando rango en chr2.')
-    base_test.cargar_rango('chr2',1000100,1010100);
-    print('>Rango cargado en chr2. Devolviendo dict_range en base_test')
-    print(base_test.dict_range)
+    base_test = seq_data('mm9', path_fasta=path_usado); # D:\\Archivos doctorado\\Genomas\\ 
+    print('>base_test inicializado.')
+    
+    #print('>base_test inicializado. Probando _consulta_secuencia_fasta().')
+    #pos_ini = 10000000;
+    #pos_end = pos_ini + 100;
+    #print('>Secuencia con consulta fasta')
+    #print(base_test._consulta_secuencia_fasta('chr1', pos_ini, pos_end));
+    #print('>Secuencia con consulta Entrez en clase')
+    #print(base_test._consulta_secuencia_entrez('chr1', pos_ini, pos_end));
+    #print('>Secuencia con funcion ConsultaSecuencia') ### FUNCION BORRADA DEL ARCHIVO
+    #print(ConsultaSecuencia(base_test._buscar_chrid('chr1'), pos_ini, pos_end));
+
+    #print('>base_test inicializado. Cargando rango en chr1.')
+    #base_test.cargar_rango('chr1',1000100,1000200);
+    #print('>Primer rango cargado en chr1. Cargando segundo rango.')
+    #base_test.cargar_rango('chr1',1200100,1200200);
+    #print('>Segundo rango cargado en chr1. Cargando rango en chr2.')
+    #base_test.cargar_rango('chr2',1000100,1000200);
+    #print('>Rango cargado en chr2. Devolviendo dict_range en base_test.')
+    #print(base_test.dict_range)
+
 
     L_out = base_test;
     return L_out
 
-
-##################################### PRUEBAS #####################################
-
-
-### Funciones para pruebas
-
-def ConsultaSecuencia(id_chr, seq_start, seq_finish, strand=1, sleep_time=60):
-    # Devuelve una secuencia dado un ID de cromosoma (incluye info de especie) y posicion inicial/final
-    time.sleep(0.1);
-    rec_seq = '';
-    try:
-        handle = Entrez.efetch(db='nucleotide', id=id_chr, rettype='fasta',
-                               strand=strand, seq_start=seq_start, seq_stop=seq_finish);
-        record = SeqIO.read(handle, 'fasta');
-        handle.close();
-        rec_seq = record.seq;
-    except:
-        logging.warning('Exception raised for chr ' + str(id_chr) + ' between positions ' + 
-                        str(seq_start) + ' and ' + str(seq_finish) + '.');
-        time.sleep(sleep_time);
-        try:
-            handle = Entrez.efetch(db='nucleotide', id=id_chr, rettype='fasta',
-                                   strand=strand, seq_start=seq_start, seq_stop=seq_finish);
-            record = SeqIO.read(handle, 'fasta');
-            handle.close();
-            rec_seq = record.seq;
-        except:
-            logging.error('Retry failed. Returning empty string.');
-    return rec_seq
-
-
-def IDchr(chromosome,genome='hg19'):
-    # Devuelve el ID de cromosoma para ConsultaSecuencia dado el numero de cromosoma y el genoma correspondiente
-    # Programado a mano, funciona solo con hg19 (humano) y mm9 (raton)
-    ret = '';
-    b = True;
-    if genome.lower() == 'hg19' or genome.lower() == 'human': # GRCh38.p13
-        dict_IDchr = {'1':'NC_000001.11', '2':'NC_000002.12', '3':'NC_000003.12', '4':'NC_000004.12',
-                      '5':'NC_000005.10', '6':'NC_000006.12', '7':'NC_000007.14', '8':'NC_000008.11',
-                      '9':'NC_000009.12', '10':'NC_000010.11', '11':'NC_000011.10', '12':'NC_000012.12',
-                      '13':'NC_000013.11', '14':'NC_000014.9', '15':'NC_000015.10', '16':'NC_000016.10',
-                      '17':'NC_000017.11', '18':'NC_000018.10', '19':'NC_000019.10', '20':'NC_000020.11',
-                      '21':'NC_000021.9', '22':'NC_000022.11', 'X':'NC_000023.11', 'Y':'NC_000024.10',
-                      'M':'NC_012920.1', 'MT':'NC_012920.1'};
-    elif genome.lower() == 'mm9' or genome.lower() == 'mouse': # MGSCv37
-        dict_IDchr = {'1':'NC_000067.5', '2':'NC_000068.6', '3':'NC_000069.5', '4':'NC_000070.5',
-                      '5':'NC_000071.5', '6':'NC_000072.5', '7':'NC_000073.5', '8':'NC_000074.5',
-                      '9':'NC_000075.5', '10':'NC_000076.5', '11':'NC_000077.5', '12':'NC_000078.5',
-                      '13':'NC_000079.5', '14':'NC_000080.5', '15':'NC_000081.5', '16':'NC_000082.5',
-                      '17':'NC_000083.5', '18':'NC_000084.5', '19':'NC_000085.5', 'X':'NC_000086.6',
-                      'Y':'NC_000087.6', 'M':'NC_005089.1', 'MT':'NC_005089.1'};
-    elif genome.lower() == 'mouse102' or genome.lower() == 'grcm38':
-        dict_IDchr = {'1':'CM000994.3', '10':'CM001003.3', '11':'CM001004.3', '12':'CM001005.3',
-                      '13':'CM001006.3', '14':'CM001007.3', '15':'CM001008.3', '16':'CM001009.3',
-                      '17':'CM001010.3', '18':'CM001011.3', '19':'CM001012.3', '2':'CM000995.3',
-                      '3':'CM000996.3', '4':'CM000997.3', '5':'CM000998.3', '6':'CM000999.3',
-                      '7':'CM001000.3', '8':'CM001001.3', '9':'CM001002.3', 'MT':'AY172335.1',
-                      'X':'CM001013.3', 'Y':'CM001014.3', 'M':'AY172335.1'};
-    else:
-        logging.error('No se pudo encontrar genoma ' + str(genome));
-        b = False;
-        dict_IDchr = {};
-
-    if str(chromosome).upper() in dict_IDchr.keys():
-        ret = dict_IDchr[str(chromosome).upper()];
-    elif b:
-        logging.error('No se pudo encontrar cromosoma ' + str(chromosome));
-    return ret
 
 
 ###################################################################################
@@ -354,380 +400,7 @@ def IDchr(chromosome,genome='hg19'):
 ###################################################################################
 
 
-###################################### CLASES #####################################
-'''
-    def _revisar_overlap_dict(self, chr_n, pos_ini, pos_end, seq):
-        # Revisa que no haya overlap en self.dict_range[chr_n] para pos_ini, pos_end
-        # Primero carga el rango [pos_ini, pos_end] en orden
-        # Despues revisa que no haya overlap con secuencia anterior y/o siguiente
-        # Si hay overlap, extiende la secuencia correspondiente, une dos rangos o ignora el rango dado
-
-        ### Display
-        print('Revisando overlap en ' + str(chr_n) + ' para rango ' + str(pos_ini) + ' a ' + str(pos_end))
-
-        # Booleano para saber si se encontro la posicion para el rango
-        posicion_encontrada = False;
-        # Contador para recorrer self.dict_range[chr_n]
-        i = 0;
-        largo_dict_chr_n = len(self.dict_range[chr_n]);
-        # Booleano para chequeos de overlap
-        ultima_posicion = False;
-        # Ciclo para recorrer self.dict_range[chr_n] y agregar [pos_ini, pos_end] en el lugar correcto
-        while (not posicion_encontrada) and i < largo_dict_chr_n:
-            curr_range = self.dict_range[chr_n][i];
-            # Si pos_ini es menor que el rango en posicion i, se aumenta i en 1
-            if pos_ini > curr_range[0]:
-                i = i+1;
-                # Si se llega a la ultima posicion, se agrega [pos_ini, pos_end] al final
-                if i == largo_dict_chr_n:
-                    self.dict_range[chr_n].append([pos_ini, pos_end]);
-                    ultima_posicion = True;
-            # En el momento que se encuentre un rango con pos_ini mayor al dado, se carga el rango
-            else:
-                posicion_encontrada = True;
-                # Se agrega [pos_ini, pos_end] en la posicion i, moviendo el rango que estaba en esa posicion para arriba
-                self.dict_range[chr_n] = self.dict_range[chr_n][:i] + [[pos_ini, pos_end]] + self.dict_range[chr_n][i:];
-
-        # Reviso posiciones adyacentes a self.dict_range[chr_n][i] (+1 y -1)
-        overlap_antes = False;
-        overlap_despues = False;
-        nueva_pos_ini = None;
-        nueva_pos_end = None;
-        # Si el rango agregado esta en la ultima posicion, no hay rango siguiente y no se hace este chequeo
-        if not ultima_posicion:
-            ##print('Revisando overlap_despues')
-            ##print('self.dict_range[chr_n][i+1][0] para i=' + str(i)+ ' es ' + str(self.dict_range[chr_n][i+1][0]))
-            ##print('Rango: (' +str(pos_ini) + ',' + str(pos_end) + ')')
-            # Si self.dict_range[chr_n][i+1][0] es menor a pos_end, hay overlap con la secuencia siguiente
-            if self.dict_range[chr_n][i+1][0] < pos_end:
-                overlap_despues = True;
-                nueva_pos_ini = pos_ini;
-                nueva_pos_end = max(self.dict_range[chr_n][i+1][1], pos_end);
-        # Si i es 0, no hay rango anterior y no se hace este chequeo
-        if i > 0:
-            ##print('Revisando overlap_antes')
-            ##print('self.dict_range[chr_n][i-1][1] para i=' + str(i)+ ' es ' + str(self.dict_range[chr_n][i-1][1]) + ')')
-            ##print('Rango: (' +str(pos_ini) + ',' + str(pos_end))
-            # Si self.dict_range[chr_n][i-1][1] es mayor a pos_ini, hay overlap con la secuencia anterior
-            if self.dict_range[chr_n][i-1][1] > pos_ini:
-                overlap_antes = True;
-                nueva_pos_ini = self.dict_range[chr_n][i-1][0];
-                nueva_pos_end = max(self.dict_range[chr_n][i-1][1], pos_end);
-        
-        # Si hay overlap antes y despues, uno los tres rangos en uno
-        if overlap_antes and overlap_despues:
-            nueva_pos_ini = self.dict_range[chr_n][i-1][0];
-            nueva_pos_end = max(self.dict_range[chr_n][i-1][1], pos_end, self.dict_range[chr_n][i+1][1]);
-            self.dict_range[chr_n] = self.dict_range[chr_n][:i-1] + [[nueva_pos_ini, nueva_pos_end]] + self.dict_range[chr_n][i+2:];
-        # Si solo hay overlap antes o despues, uno dos rangos
-        elif overlap_antes:
-            self.dict_range[chr_n] = self.dict_range[chr_n][:i-1] + [[nueva_pos_ini, nueva_pos_end]] + self.dict_range[chr_n][i+1:];
-        elif overlap_despues:
-            self.dict_range[chr_n] = self.dict_range[chr_n][:i] + [[nueva_pos_ini, nueva_pos_end]] + self.dict_range[chr_n][i+2:];
-        # Si no hay overlap ni antes ni despues, el rango queda agregado
-
-        ### Display
-        ##print('Overlap antes: ' + str(overlap_antes))
-        ##print('Overlap despues: ' + str(overlap_despues))
-        return self
-
-
-    def actualizar_M_seq(self, buscar_seq):
-        # Actualiza M_seq en base a los rangos registrados en dict_range
-
-        ########### FALTA
-        return self
-
-
-    def agregar_secuencia(self, chr_n, pos_ini, pos_end, seq=''):
-        # Agrega una secuencia a self.dict_range
-        # Revisa que no haya overlap con ninguna secuencia en self.dict_range
-        # Si hay overlap, hace chequeo y merge
-        # Si no hay overlap, agrega el rango al diccionario
-
-        ### Display
-        print('Empezando parseo de rango ' + str(chr_n) + ' : ' + str(pos_ini) + ' - ' + str(pos_end))
-
-        # Parseo el rango para que pos_ini sea el menor numero y pos_end, el mayor
-        seq_range = [min(int(pos_ini), int(pos_end)), max(int(pos_ini), int(pos_end))];
-        # Primero reviso si chr_n esta en self.dict_range.keys()
-        if chr_n in self.dict_range.keys():
-            # Si chr_n ya esta en self.dict_range.keys(), tengo que chequear que no haya overlap
-            self._revisar_overlap_dict(chr_n, seq_range[0], seq_range[1], seq);
-        else:
-            print('Rango agregado a dict_range directamente')
-            # Si chr_n no esta en self.dict_range.keys(), agrego la key y el rango
-            self.dict_range[chr_n] = [];
-            self.dict_range[chr_n].append(seq_range);
-
-        return self
-
-
-    def _buscar_secuencia(self, M_seq_id):
-        # Busca la secuencia para self.M_seq[M_seq_id]
-        # Si seq == '', la carga directamente
-        # Si seq == secuencia buscada, da OK
-        # Si seq != secuencia buscada, tira error y cambia la secuencia en self.M_seq
-        # Devuelve un string que se printea con _print_progress() si el ciclo quiere
-
-        # Inicializo la variable que se devuelve
-        p_ret = '';
-        # Defino el sitio y la secuencia
-        curr_site = self.M_seq[M_seq_id];
-        seq_site = curr_site[-1];
-        # Busco el id del cromosoma
-        chr_id = IDchr(curr_site[0][3:],genome=self.genome_name);
-        # Busco la secuencia dada por pos_ini y pos_end
-        curr_seq = str(ConsultaSecuencia(chr_id, curr_site[1], curr_site[2]));
-
-        if seq_site == '':
-            self.M_seq[M_seq_id][-1] = str(curr_seq);
-            p_ret = 'Sitio vacio encontrado y cargado';
-        elif seq_site != curr_seq:
-            p_ret = 'ERROR: Sitio encontrado distinto al cargado';
-        else:
-            p_ret = 'OK';
-        return p_ret
-
-
-    def _cargar_rango(self, chr_n, pos_ini, pos_end, seq=''):
-        # Agrega chr_n, pos_ini, pos_end y seq directamente a self.M_seq
-        # Funcion a fuerza bruta para no usar por si sola
-        self.M_seq.append([chr_n, pos_ini, pos_end, seq]);
-        return self
-
-
-    def _print_progress(self, texto):
-        # Funcion para hacer prints que se sobreescriban entre si
-        # Cambio end para usar en consola o en Python IDLE
-        # end='\r' para consola; end='\n' para Python IDLE
-        print(texto, end='\r');
-        return self
-
-
-    def agregar_rango(self, chr_n, pos_ini, pos_end, seq=''):
-        # Agrega rango en formato chr_n, pos_ini, pos_end a self.M_seq
-        # Funcion que revisa si el rango ya existe en self.M_seq o si hay overlap
-        # Si el rango ya esta representado, no hace nada
-        # Si el rango no esta representado ni toca con otros, lo agrega directamente
-        # Si el rango tiene overlap con otro rango, los junta y transforma en un rango mayor
-
-        # Primero veo si hay overlap
-        overlap_check = self.buscar_overlap(chr_n, pos_ini, pos_end); ####### FALTA HACER ESTO #######
-
-        ##################### HACER #####################
-        return self
-
-
-    def append_M_seq(self, loaded_M):
-        # Funcion que revisa una matriz cargada y la agrega a self.M_seq
-
-        # Reviso cada rango en loaded_M
-        for i in range(len(loaded_M)):
-            curr_range = loaded_M[i];
-            if len(curr_range)>3:
-                # Dejo que append_range() decida si se agrega, se solapa o se ignora
-                self.agregar_rango(curr_range[0], curr_range[1], curr_range[2], seq=curr_range[3]); ####### FALTA HACER ESTO #######
-            else:
-                # Dejo que append_range() decida si se agrega, se solapa o se ignora
-                self.agregar_rango(curr_range[0], curr_range[1], curr_range[2], seq=''); ####### FALTA HACER ESTO #######
-        return self
-
-
-    def buscar_overlap(self, chr_n, pos_ini, pos_end):
-        # Busca si self.M_seq tiene segmentos que se solapen con chr_n, pos_ini, pos_end
-        # Devuelve 0 si el rango no esta en self.M_seq
-        # Devuelve 1 si hay overlap o si el rango toca a otro rango en self.M_seq
-        # Devuelve 2 si el rango se encuentra dentro de self.M_seq
-        
-        # Inicializo los booleanos que definen que pasa
-        # M_seq_overlap registra todos los rangos que se superpongan con el buscado
-        M_seq_overlap = [];
-        # Recorro self.M_seq
-        for i in range(len(self.M_seq)):
-            # Primero selecciono los rangos de self.M_seq en chr_n
-            if self.M_seq[i][0] == chr_n:
-                ########### HACER CHEQUEO DE OVERLAP ACA ###########
-                M_seq_overlap.append(self.M_seq[i][:]);
-        
-        ##################### HACER #####################
-        ## FALTA:
-        ## Ver cuantos elementos hay en M_seq_overlap
-        ## Si hay uno, ver si es overlap completo o parcial
-        ## Si hay cero, agregar el rango dado
-        ## Si hay mas de uno, ver si tienen overlap entre ellos primero
-        ## Si no tienen overlap, hacer chequeo fuerza bruta
-        return self
-
-
-    def cargar_archivo(self, nombre_in, append_mode=False, ext='.csv', sep=';'):
-        # Funcion para cargar todos los rangos y secuencias desde un archivo
-        # Optimizado para funcionar con el output de self.guardar_archivo()
-        # append_mode define si se agregan los sitios del archivo o si se borra todo antes de cargar
-
-        # Extraigo las secuencias de nombre_in en loaded_M_seq
-        loaded_M_seq = abrir_archivo(nombre_in, ext, sep);
-
-        # Si append_mode es True, se compara self.M_seq con loaded_M_seq
-        if append_mode:
-            self.append_M_seq(loaded_M_seq); ############# FALTA HACER #############
-        # Si append_mode es False, se reinicia self.M_seq con loaded_M_seq
-        else:
-            self.M_seq = loaded_M_seq;
-        return self
-
-
-    def leer_bed(self, nom_arch, append_mode=True, path_arch='', ext='.bed', sep='\t'):
-        # Funcion para leer archivos .bed y guardar los rangos de peaks en self.M_seq
-        # Asume que chr_n, pos_ini y pos_end estan en las primeras 3 filas
-        ### Puedo agregar L_data_id para definir las columnas con chr_n, pos_ini y pos_end
-
-        # Defino dir_arch con nom_arch y path_arch
-        if path_arch != '':
-            dir_arch = os.path.join(path_arch, nom_arch);
-        else:
-            dir_arch = nom_arch;
-        # Extraigo las secuencias de dir_arch en loaded_M_seq
-        loaded_M_seq = abrir_arch_dir(dir_arch, nom_arch, ext, sep);
-
-        # Selecciono las primeras 3 columnas de cada fila
-        for i in range(len(loaded_M_seq)):
-            loaded_M_seq[i] = loaded_M_seq[i][:3];
-
-        # Si append_mode es True, se compara self.M_seq con loaded_M_seq
-        if append_mode:
-            self.append_M_seq(loaded_M_seq); ############# FALTA HACER #############
-        # Si append_mode es False, se reinicia self.M_seq con loaded_M_seq
-        else:
-            self.M_seq = loaded_M_seq;
-        return self
-
-
-    def guardar_archivo(self, nombre_out, ext='.csv', sep=';'):
-        # Funcion para guardar todos los rangos y secuencias en un .csv
-        
-        # Creo y abro el archivo de output
-        with open(nombre_out + ext, 'w') as F_out:
-            print('Archivo ' + str(nombre_out) + str(ext) + ' creado.');
-        with open(nombre_out + ext, 'a') as F_out:
-            # Recorro self.M_seq
-            for i in range(len(self.M_seq)):
-                curr_SU = self.M_seq[i];
-                # Inicializo el texto que se guarda en el archivo
-                curr_r = '';
-                # Cargo cada elemento de curr_SU separado por sep
-                for j in curr_SU:
-                    curr_r = curr_r + str(j) + str(sep);
-                # Elimino el ultimo sep y agrego el fin de linea
-                curr_r = curr_r.rstrip(sep) + '\n';
-                # Guardo el texto en F_out
-                F_out.write(str(curr_r));
-        return self
-
-
-    def revisar_mult(self, carga_vacias=False, L_ids=[]):
-        # Revisa si self.M_seq[id] contiene seq correspondiente al rango
-        # Consulta por secuencias a Ensembl (lento para muchas consultas)
-        # Si L_ids es vacio, revisa TODO (puede llegar a ser MUY lento)
-        # Puede usarse para cargar secuencias vacias
-
-        # Primero reviso si L_ids esta vacio
-        if len(L_ids) == 0:
-            cont_total = len(self.M_seq);
-            # Si esta vacio, armo un L_ids con todos los ids
-            L_ids_usado = list(range(cont_total));
-        else:
-            cont_total = len(L_ids);
-            # Sino uso L_ids directamente
-            L_ids_usado = L_ids;
-
-        # Variables para display
-        seq_ok = 0;
-        seq_error = 0;
-        seq_cargada = 0;
-        seq_vacias = 0;
-        # Recorro L_ids_usado
-        for i in L_ids_usado:
-            # Texto para display
-            p_text = '';
-            # Defino curr_sitio y curr_seq
-            curr_site = self.M_seq[i];
-            curr_seq = curr_site[-1];
-            # Si la secuencia esta vacia, defino que se hace con carga_vacias e ignora_vacias
-            if curr_seq == '':
-                # Si carga_vacias == True, uso self._buscar_secuencia() 
-                if carga_vacias:
-                    p_ret = self._buscar_secuencia(i);
-                    seq_cargada = seq_cargada + 1;
-                # Sino solo registro seq_vacias
-                else:
-                    seq_vacias = seq_vacias + 1;
-            # Si la secuencia no esta vacia y es del largo esperado por pos_ini y pos_end
-            # Paso directamente a self._buscar_secuencia()
-            elif len(curr_seq) == curr_site[2]-curr_site[1]+1:
-                p_ret = self._buscar_secuencia(i);
-                if p_ret == 'OK':
-                    seq_ok = seq_ok + 1;
-                else:
-                    seq_error = seq_error + 1;
-            # Si la secuencia es de distinto largo del esperado
-            # Paso a self._buscar_secuencia() y agrego directamente a seq_error
-            else:
-                p_ret = self._buscar_secuencia(i);
-                p_ret = p_ret + ' y de distinto largo';
-                seq_error = seq_error + 1;
-            ### Display
-            cont = seq_ok+seq_error+seq_cargada+seq_vacias;
-            p_text = 'Revisadas ' + str(cont) + ' de ' + str(len(L_ids_usado)) + ' secuencias.';
-            self._print_progress(p_text);
-            # Reviso si hubo errores que mostrar
-            if p_ret[5:] == 'ERROR':
-                logging.error(p_ret);
-        p_final = 'Carga terminada. Secuencias OK: ' + str(seq_ok) + '. Secuencias con errores: ' + str(seq_error) + '.'
-        if carga_vacias:
-            p_final = p_final + ' Secuencias cargadas: ' + str(seq_cargada) + '.';
-        else:
-            p_final = p_final + ' Secuencias vacias: ' + str(seq_vacias) + '.';
-        print(p_final);
-        return self
-'''
-
 #################################### FUNCIONES ####################################
-
-
-def abrir_arch_dir(dir_arch, nom_arch, ext, sep_arch):
-    # Abre un archivo en una carpeta diferente a la actual, similar a abrir_archivo()
-    # Devuelve las filas divididas en columnas como matriz
-
-    # Creo la matriz que se devuelve
-    M_out = [];
-    # Abro el archivo
-    with open(dir_arch + ext, 'r') as F:
-        print('Archivo ' + str(nom_arch) + str(ext) + ' abierto.');
-        # Reviso cada linea de F
-        for curr_line in F:
-            # Paso cada linea a formato de lista
-            L = curr_line.rstrip().split(sep_arch);
-            # Guardo L en M_out
-            M_out.append(L[:]);
-    return M_out
-
-
-def abrir_archivo(nom_arch, ext, sep_arch):
-    # Abre un archivo y devuelve las filas divididas en columnas como matriz
-
-    # Creo la matriz que se devuelve
-    M_out = [];
-    # Abro el archivo
-    with open(nom_arch + ext, 'r') as F:
-        print('Archivo ' + str(nom_arch) + str(ext) + ' abierto.');
-        # Reviso cada linea de F
-        for curr_line in F:
-            # Paso cada linea a formato de lista
-            L = curr_line.rstrip().split(sep_arch);
-            # Guardo L en M_out
-            M_out.append(L[:]);
-    return M_out
 
 
 def complemento(N,adn=True):
