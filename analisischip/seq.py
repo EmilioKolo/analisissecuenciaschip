@@ -46,8 +46,8 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
     # ? _check_overlap(chr_n, pos_ini, pos_end): Revisa que no haya overlap (ver funciones armadas en este archivo)
     # X _consulta_secuencia_fasta(chr_n, pos_ini, pos_end): Devuelve la secuencia consultando en los archivos .fasta
     # - Con funcion cargar_rango() funcional, hacer cargar_bed() y cargar_promotores_genoma(rango)
-        # - cargar_bed(archivo): Carga todos los rangos en un archivo de output de ChIP-seq
-        # - cargar_promotores_genoma(rango): Carga todos los rangos alrededor de promotores de genes
+        # ~ cargar_bed(archivo): Carga todos los rangos en un archivo de output de ChIP-seq
+        # ~ cargar_promotores(rango): Carga todos los rangos alrededor de promotores de genes
 
 
 
@@ -351,6 +351,19 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         return self
 
 
+    def cargar_promotores(self, rango_promotor, genoma):
+        # Carga todos los rangos del genoma a self.dict_range
+        # Registra entre rango_promotor[0] y rango_promotor[1] a partir del +1 de cada gen
+        # Usa cargar_rango()
+
+        ### FALTA:
+        # Definir el genoma de Entrez a partir del input y obtener el objeto de Entrez
+        # Recorrer cada gen en el genoma
+        # Para cada gen, obtener pos0 y usar self.cargar_rango(chr_n, pos0+rango_promotor[0], pos0+rango_promotor[1])
+        ###
+        return self
+
+
     def leer_bed(self, nom_bed, path_bed='.\\'):
         # Carga todos los rangos en un archivo .bed con los outputs de ChIP-seq a self.dict_range
         # Usa cargar_rango()
@@ -362,19 +375,6 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         # Abrir el archivo .bed en dir_arch
         # Extraer las columnas con chr_n, pos_ini y pos_end
         # Agregarlas con self.cargar_rango()
-        ###
-        return self
-
-
-    def rangos_promotores(self, rango_promotor, genoma):
-        # Carga todos los rangos del genoma a self.dict_range
-        # Registra entre rango_promotor[0] y rango_promotor[1] a partir del +1 de cada gen
-        # Usa cargar_rango()
-
-        ### FALTA:
-        # Definir el genoma de Entrez a partir del input y obtener el objeto de Entrez
-        # Recorrer cada gen en el genoma
-        # Para cada gen, obtener pos0 y usar self.cargar_rango(chr_n, pos0+rango_promotor[0], pos0+rango_promotor[1])
         ###
         return self
 
