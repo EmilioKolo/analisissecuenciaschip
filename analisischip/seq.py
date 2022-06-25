@@ -4,6 +4,7 @@ import time
 import logging
 # Analisis de secuencias y genomas
 from Bio import Entrez, SeqIO
+from pyensembl import EnsemblRelease
 
 
 ###################################### CLASES #####################################
@@ -333,6 +334,47 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         return ret
 
 
+    def _obtener_genoma(self, genome_version='', organism=''):
+        # Asigna un elemento genoma de Ensembl a self.genome
+        # Si self.genome_name no es hg19, mm9 ni hg38, intenta buscar usando EnsemblRelease(genome_version, species=organism)
+
+        # Defino el genoma default (por si lo quiero cambiar rapido)
+        default_genome = EnsemblRelease(102, species='human');
+        # Primero reviso self.genome_name por si es hg19, mm9 o hg38
+        if self.genome_name.lower() in ['hg19', 'mm9', 'hg38']:
+            # CUIDADO: En init se asume hg19 si no se da uno de estos genome_name
+            # Para seguir hay que cambiar init o cambiar manualmente self.genome_name
+            if self.genome_name.lower() == 'hg19':
+                self.genome = EnsemblRelease(102, species='human');
+            elif self.genome_name.lower() == 'mm9':
+                self.genome = EnsemblRelease(67, species='mouse');
+            elif self.genome_name.lower() == 'hg38':
+                self.genome = EnsemblRelease(102, species='mouse');
+            else:
+                # Esto no deberia pasar
+                logging.error('self.genome_name no esta en la lista seleccionada. Se utiliza el genoma por defecto.');
+                self.genome = default_genome;
+        # Si self.genome no esta cargado y self.genome_name no es hg19, mm9 ni hg38, veo si genome_version o organism tienen info
+        elif genome_version != '' or organism != '':
+            # Si hay genome_version o organism cargados, veo si ambos estan cargados
+            if genome_version != '' and organism != '':
+                # Pruebo correr y si falla uso default_genome
+                try:
+                    self.genome = EnsemblRelease(int(genome_version), species=organism);
+                except:
+                    logging.error('Falla busqueda de genoma species=' + str(organism)  + '; version=' + str(genome_version) + '. Se utiliza el genoma por defecto.')
+                    self.genome = default_genome;
+            # Si ninguno esta cargado, tiro error y uso default_genome
+            else:
+                logging.error('Completar genome_version y organism para buscar en EnsemblRelease. Se utiliza el genoma por defecto.');
+                self.genome = default_genome;
+        else:
+            # Si no hay ningun dato, directamente se asume default_genome
+            logging.warning('Sin informacion de genoma. Se utiliza el genoma por defecto.');
+            self.genome = default_genome;
+        return self
+
+
     def cargar_rango(self, chr_n, pos_ini, pos_end):
         # Carga un rango de secuencias en self.dict_range (y hace muchos chequeos)
         # No revisa si hay superposicion
@@ -351,14 +393,33 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         return self
 
 
-    def cargar_promotores(self, rango_promotor, genoma):
+    def cargar_promotores(self, rango_promotor, genome_version='', organism=''):
         # Carga todos los rangos del genoma a self.dict_range
         # Registra entre rango_promotor[0] y rango_promotor[1] a partir del +1 de cada gen
-        # Usa cargar_rango()
+        # Usa cargar_rango() con los rangos obtenidos y chequea que el genoma este cargado con _obtener_genoma()
 
+        # Chequeo si self.genome esta cargado
+        if self.genome == '':
+            # Si no esta cargado, uso self._obtener_genoma() para cargarlo
+            self._obtener_genoma(genome_version, organism);
+
+        # Lista de contigs que puedo procesar
+        lista_contigs = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 
+                         '11', '12', '13', '14', '15', '16', '17', '18', '19', 
+                         '20', '21', '22', '23', 'X', 'Y', 'M', 'MT'];
+        # Recorro cada gen en el genoma
+        for gene_object in self.genome.genes():
+            # Solo agarro protein_coding
+            if gene_object.biotype == 'protein_coding':
+                ### FALTA:
+                # Funcion para definir pos0
+                # Funcion para definir chr en base a contig
+
+                # Defino pos0 del gen y booleano forward en base a strand y pos_ini/pos_end
+                pos0, forward = '', True;
+            if not (gene_object.contig in lista_contigs):
+                print(gene_object.contig)
         ### FALTA:
-        # Definir el genoma de Entrez a partir del input y obtener el objeto de Entrez
-        # Recorrer cada gen en el genoma
         # Para cada gen, obtener pos0 y usar self.cargar_rango(chr_n, pos0+rango_promotor[0], pos0+rango_promotor[1])
         ###
         return self
@@ -366,7 +427,7 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
 
     def leer_bed(self, nom_bed, path_bed='.\\'):
         # Carga todos los rangos en un archivo .bed con los outputs de ChIP-seq a self.dict_range
-        # Usa cargar_rango()
+        # Usa cargar_rango() con los rangos obtenidos
 
         # Defino la direccion del archivo en base a path_bed y nom_bed
         dir_arch = os.path.join(path_bed, nom_bed);
@@ -398,7 +459,8 @@ def _main_test():
     # Pruebo inicializar seq_data
     print('>Inicializando base_test.')
     base_test = seq_data('mm9', path_fasta=path_usado); # D:\\Archivos doctorado\\Genomas\\ 
-    print('>base_test inicializado.')
+    print('>base_test inicializado. Inicializando revision de genoma.')
+    base_test.cargar_promotores([-1500, 1500]);
 
     #print('>base_test inicializado. Probando _consulta_secuencia_fasta().')
     #pos_ini = 10000000;
