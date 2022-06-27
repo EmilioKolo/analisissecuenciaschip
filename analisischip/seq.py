@@ -334,6 +334,23 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         return ret
 
 
+    def _obtener_chr(self, contig):
+        # Recibe contig de un elemento gen de Entrez y define chr_n en base a eso
+
+        # Lista de contigs que puedo procesar
+        lista_contigs = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 
+                         '11', '12', '13', '14', '15', '16', '17', '18', '19', 
+                         '20', '21', '22', '23', 'X', 'Y', 'M', 'MT'];
+        # Reviso que contig este en lista_contigs
+        if str(contig).upper() in lista_contigs:
+            # Los elementos de la lista de contigs funcionan agregando chr antes del contig
+            chr_n = 'chr' + str(contig).upper();
+        else:
+            logging.warning('Contig "' + str(contig) + '" no se pudo procesar.')
+            chr_n = '';
+        return chr_n
+
+
     def _obtener_genoma(self, genome_version='', organism=''):
         # Asigna un elemento genoma de Ensembl a self.genome
         # Si self.genome_name no es hg19, mm9 ni hg38, intenta buscar usando EnsemblRelease(genome_version, species=organism)
@@ -375,9 +392,30 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         return self
 
 
-    def cargar_rango(self, chr_n, pos_ini, pos_end):
+    def _obtener_pos0_forward(self, pos_ini, pos_end, strand, strand_forward='+', strand_reverse='-'):
+        # Recibe pos_ini, pos_end y strand de un elemento gen de Entrez
+        # En base a eso, define si el gen es forward o reverse y devuelve la posicion del +1
+        # Permite cambiar que se define como forward y reverse
+
+        # Reviso strand
+        if strand == strand_forward:
+            forward = True;
+        elif strand == strand_reverse:
+            forward = False;
+        else:
+            logging.error('Strand "' + str(strand) + '" no definida como forward ni reverse. Se usa forward como default.')
+            forward = True;
+        if forward:
+            ret = pos_ini;
+        else:
+            ret = pos_end;
+        return ret, forward
+
+
+    def cargar_rango(self, chr_n, pos_ini, pos_end, forward=True):
         # Carga un rango de secuencias en self.dict_range (y hace muchos chequeos)
         # No revisa si hay superposicion
+        # Forward registra para histogramas en rangos de promotores
 
         # Uso self._chr_check(chr_n) para revisar que el cromosoma este presente
         chr_presente = self._chr_check(str(chr_n));
@@ -385,7 +423,7 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         if chr_presente:
             # Es posible que sea necesario revisar superposicion, pero inicialmente no lo hago
             # Creo el rango revisando que sean int y pos_ini sea menor que pos_end
-            rango_cargado = (min(int(pos_ini), int(pos_end)), max(int(pos_ini), int(pos_end)));
+            rango_cargado = (min(int(pos_ini), int(pos_end)), max(int(pos_ini), int(pos_end)), forward);
             self.dict_range[chr_n].append(rango_cargado);
         # Si no pude agregar chr_n, tiro error
         else:
@@ -403,25 +441,22 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
             # Si no esta cargado, uso self._obtener_genoma() para cargarlo
             self._obtener_genoma(genome_version, organism);
 
-        # Lista de contigs que puedo procesar
-        lista_contigs = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 
-                         '11', '12', '13', '14', '15', '16', '17', '18', '19', 
-                         '20', '21', '22', '23', 'X', 'Y', 'M', 'MT'];
         # Recorro cada gen en el genoma
         for gene_object in self.genome.genes():
             # Solo agarro protein_coding
             if gene_object.biotype == 'protein_coding':
-                ### FALTA:
-                # Funcion para definir pos0
-                # Funcion para definir chr en base a contig
-
                 # Defino pos0 del gen y booleano forward en base a strand y pos_ini/pos_end
-                pos0, forward = '', True;
-            if not (gene_object.contig in lista_contigs):
-                print(gene_object.contig)
-        ### FALTA:
-        # Para cada gen, obtener pos0 y usar self.cargar_rango(chr_n, pos0+rango_promotor[0], pos0+rango_promotor[1])
-        ###
+                pos0, forward = self._obtener_pos0_forward(gene_object.start, gene_object.end, gene_object.strand);
+                # Defino chr_n en base a contig
+                chr_n = self._obtener_chr(gene_object.contig);
+                # Solo cargo el rango si chr_n se pudo procesar (si no se puede, devuelve string vacio)
+                if chr_n != '':
+                    # Si el gen es forward, registro el rango normalmente
+                    if forward:
+                        self.cargar_rango(chr_n, pos0+rango_promotor[0], pos0+rango_promotor[1],forward=forward);
+                    # Si es reverse, tengo que dar vuelta rango_promotor y restarlo
+                    else:
+                        self.cargar_rango(chr_n, pos0-rango_promotor[1], pos0-rango_promotor[0],forward=forward);
         return self
 
 
@@ -461,6 +496,9 @@ def _main_test():
     base_test = seq_data('mm9', path_fasta=path_usado); # D:\\Archivos doctorado\\Genomas\\ 
     print('>base_test inicializado. Inicializando revision de genoma.')
     base_test.cargar_promotores([-1500, 1500]);
+    print('>Carga de promotores finalizada. Mostrando dict_range.')
+    for key in base_test.dict_range.keys():
+        print(key)
 
     #print('>base_test inicializado. Probando _consulta_secuencia_fasta().')
     #pos_ini = 10000000;
@@ -482,7 +520,7 @@ def _main_test():
     #print(base_test.dict_range)
 
 
-    L_out = base_test;
+    L_out = base_test.dict_range;
     return L_out
 
 
