@@ -450,28 +450,72 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
                 # Defino chr_n en base a contig
                 chr_n = self._obtener_chr(gene_object.contig);
                 # Solo cargo el rango si chr_n se pudo procesar (si no se puede, devuelve string vacio)
-                if chr_n != '':
+                if len(chr_n) > 0:
                     # Si el gen es forward, registro el rango normalmente
                     if forward:
                         self.cargar_rango(chr_n, pos0+rango_promotor[0], pos0+rango_promotor[1],forward=forward);
-                    # Si es reverse, tengo que dar vuelta rango_promotor y restarlo
+                    # Si es reverse, tengo que usar rango_promotor al reves y restarlo
                     else:
                         self.cargar_rango(chr_n, pos0-rango_promotor[1], pos0-rango_promotor[0],forward=forward);
         return self
 
 
-    def leer_bed(self, nom_bed, path_bed='.\\'):
+    def leer_bed(self, nom_bed, path_bed='.\\', col_chr=0, col_ini=1, col_end=2, sep='\t', ext='.bed'):
         # Carga todos los rangos en un archivo .bed con los outputs de ChIP-seq a self.dict_range
         # Usa cargar_rango() con los rangos obtenidos
+        # col_chr, col_ini y col_end definen la columna de la matriz donde se encuentran los datos necesarios
 
         # Defino la direccion del archivo en base a path_bed y nom_bed
-        dir_arch = os.path.join(path_bed, nom_bed);
+        # Si nom_bed no termina en .bed, lo agrego
+        if nom_bed[-len(ext):] != ext:
+            dir_arch = os.path.join(path_bed, nom_bed + str(ext));
+        else:
+            dir_arch = os.path.join(path_bed, nom_bed);
 
-        ### FALTA:
-        # Abrir el archivo .bed en dir_arch
-        # Extraer las columnas con chr_n, pos_ini y pos_end
-        # Agregarlas con self.cargar_rango()
-        ###
+        # Intento abrir el archivo .bed en dir_arch
+        try:
+            # Pruebo abrir el archivo (se pueden agregar mas pruebas)
+            F = open(dir_arch, 'r');
+            F.close();
+            # Registro que el archivo existe
+            arch_existe = True;
+        except:
+            # Si tira error, registro que el archivo no existe
+            arch_existe = False;
+        # Si el archivo existe, lo abro propiamente
+        if arch_existe:
+            with open(dir_arch, 'r') as F:
+                # Recorro cada linea del archivo
+                for curr_line in F:
+                    # Hago una lista de la linea actual
+                    L = curr_line.rstrip().split(sep);
+                    # Reviso que L tenga largo para los valores de busqueda de columnas
+                    if len(L) > max(col_chr, col_ini, col_end):
+                        # Defino chr, pos_ini y pos_end en base a los valores de columna dados
+                        chr_bed = L[col_chr];
+                        pos_ini = int(L[col_ini]);
+                        pos_end = int(L[col_end]);
+                        # Si chr_bed empieza con chr, lo uso como chr_n
+                        if chr_bed[:3] == 'chr':
+                            self.cargar_rango(chr_bed, pos_ini, pos_end);
+                        # Si chr_bed es un string corto, reviso con _obtener_chr()
+                        elif len(chr_bed) <= 2:
+                            chr_n = self._obtener_chr(chr_bed);
+                            # Si _obtener_chr() devuelve un string no vacio, uso cargar_rango()
+                            if len(chr_n) > 0:
+                                self.cargar_rango(chr_n, pos_ini, pos_end);
+                            # Si devuelve un string vacio, tiro error
+                            else:
+                                logging.error('No se pudo interpretar "' + str(chr_bed) + '".');
+                        # Si chr_bed es un string largo que no empieza con 'chr', tiro error
+                        else:
+                            logging.error('No se pudo interpretar "' + str(chr_bed) + '".');
+                    # Si L no tiene el largo, tiro error
+                    else:
+                        logging.warning('Fila demasiado corta. Lista obtenida: ' + str(L) + '.')
+        # Si el archivo no se pudo abrir, tiro error
+        else:
+            logging.error('No se pudo abrir el archivo "' + str(nom_bed) + '" en "' + str(path_bed) + '".');
         return self
 
 
@@ -494,11 +538,22 @@ def _main_test():
     # Pruebo inicializar seq_data
     print('>Inicializando base_test.')
     base_test = seq_data('mm9', path_fasta=path_usado); # D:\\Archivos doctorado\\Genomas\\ 
-    print('>base_test inicializado. Inicializando revision de genoma.')
-    base_test.cargar_promotores([-1500, 1500]);
-    print('>Carga de promotores finalizada. Mostrando dict_range.')
+    print('>base_test inicializado. Probando carga de archivo .bed.')
+    nom_bed = 'Dupays2015';
+    path_bed = 'D:\\Dropbox\\Doctorado\\3-Genes transactivados rio abajo\\0-Fuentes\\Papers ChIP-seq\\';
+    print('>Probando leer_bed con "' + nom_bed + '" en "' + path_bed + '".')
+    base_test.leer_bed(nom_bed, path_bed);
+    print('>Archivo leido y cargado. Mostrando dict_range.')
     for key in base_test.dict_range.keys():
         print(key)
+        print(base_test.dict_range[key])
+
+    #print('>base_test inicializado. Inicializando revision de genoma.')
+    #base_test.cargar_promotores([-1500, 1500]);
+    #print('>Carga de promotores finalizada. Mostrando dict_range.')
+    #for key in base_test.dict_range.keys():
+    #    print(key)
+    #    print(base_test.dict_range[key])
 
     #print('>base_test inicializado. Probando _consulta_secuencia_fasta().')
     #pos_ini = 10000000;
