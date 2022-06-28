@@ -82,6 +82,19 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         return ret
 
 
+    def _buscar_SU_en_seq(self, seq_union, seq_referencia):
+        # Busca todas las ocurrencias de seq_union en seq_referencia
+        # Devuelve una lista de sitios de union en formato [pos_ini, pos_end, forward]
+
+        # Inicializo la lista de sitios de union
+        L_SU = [];
+        ### FALTA:
+        # Ver script de busqueda de sitios de union en secuencia
+        # Agregar funciones de complemento
+        ###
+        return L_SU
+
+
     def _cargar_dict_chrid(self, genome_name):
         # Inicializa self.dict_chrid para pasar de chr_n a chr_id
         # Redefine self.genome_name para estandarizar outputs
@@ -412,25 +425,36 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         return ret, forward
 
 
-    def buscar_sitios_union(self, L_sitios):
+    def buscar_sitios_union_lista(self, L_sitios):
         # Crea y devuelve un elemento seq_data con las posiciones de todos los sitios de union en self.dict_rangos
+        # Busca una lista de sitios de union posibles
 
         # Inicializo el elemento seq_data que se devuelve con los mismos valores de init que el que contiene los rangos
         seq_out = seq_data(self.genome_name, genome_element=self.genome, path_fasta=self.path_fasta);
-
         # Recorro cada uno de los cromosomas en self.dict_rangos
         for key in self.dict_range.keys():
             L_rangos = self.dict_range[key];
             chr_n = key;
             # Recorro cada rango en L_rangos para chr_n
             for curr_rango in L_rangos:
-                # Inicializo la lista de sitios de union encontrados
-                L_SU = [];
+                # Defino pos_ini y pos_end para curr_rango
+                # No reviso la orientacion del rango porque devuelvo el sitio con orientacion incluida
+                curr_pos_ini = min(curr_rango[0], curr_rango[1]);
+                curr_pos_end = max(curr_rango[0], curr_rango[1]);
+                # Busco la secuencia dada en el rango
+                seq_rango = self._consulta_secuencia_fasta(chr_n, curr_pos_ini, curr_pos_end);
+                # Recorro cada sitio buscado en L_sitios
+                for sitio_buscado in L_sitios:
+                    # Obtengo una lista de posiciones para los sitios de union encontrados
+                    L_SU = self._buscar_SU_en_seq(sitio_buscado, seq_rango);
+                    # Por cada sitio encontrado, cargo un rango en seq_out
+                    for sitio_encontrado in L_SU:
+                        ##### Ver como devuelvo el sitio en _buscar_SU_en_seq()
+                        seq_out.cargar_rango(chr_n, sitio_encontrado[0], sitio_encontrado[1], forward=sitio_encontrado[2]);
         ### FALTA: 
         # Buscar sitios de union en cada uno de los rangos
-            # Pulir funcion para busqueda
-            # Pensar como usar matrices de pesos
-        # Devolver el elemento seq_data con todos los rangos cargados
+            # Hacer funcion para busqueda (ver anteriores)
+        # Devolver seq_out con todos los rangos cargados
         ###
         return seq_out
 
