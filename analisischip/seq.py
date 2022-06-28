@@ -88,9 +88,14 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
 
         # Inicializo la lista de sitios de union
         L_SU = [];
+        # Recorro seq_referencia en direccion forward
+        for i in range(len(seq_referencia)-len(seq_union)):
+            # Defino la secuencia que se revisa
+            curr_seq = seq_referencia[i:i+len(seq_union)];
         ### FALTA:
-        # Ver script de busqueda de sitios de union en secuencia
-        # Agregar funciones de complemento
+        # Ver script de busqueda de sitios de union en secuencia 
+        # Funciones buscar_en_seq_ambas_direcciones() y buscar_seq_2dir_unificado()
+        # Copiadas de archivo 4-RevisarSitiosUnion.py 
         ###
         return L_SU
 
@@ -182,6 +187,46 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         return ret
 
 
+    def _complemento(self, N, adn=True):
+        # Devuelve el complemento del nucleotido N, para ADN o ARN
+    
+        # Defino los diccionarios de traduccion de ADN y ARN
+        dict_adn = {'T':'A','U':'A','A':'T','C':'G','G':'C','Y':'R','R':'Y','K':'M','M':'K',
+                    'W':'W','S':'S','D':'H','H':'D','V':'B','B':'V','N':'N'};
+        dict_arn = {'T':'A','U':'A','A':'U','C':'G','G':'C','Y':'R','R':'Y','K':'M','M':'K',
+                    'W':'W','S':'S','D':'H','H':'D','V':'B','B':'V','N':'N'};
+
+        # Reviso que el nucleotido a traducir este en las keys de los diccionarios (ambos tienen mismas keys)
+        if not (N in dict_adn.keys()):
+            # Si N no esta entre las keys, devuelvo nucleotido 'N'
+            logging.warning('Nucleotido "' + str(N) + '" no interpretado. Se devuelve N.');
+            ret = 'N';
+        # Si adn es True, uso dict_adn para la traduccion
+        elif adn:
+            ret = dict_adn[N];
+        # Si adn es False, uso dict_arn para la traduccion
+        else:
+            ret = dict_arn[N];
+        return ret
+
+
+    def _consulta_entrez_chr(self, chr_id):
+        # Devuelve objeto record de Entrez conteniendo la secuencia completa de un cromosoma en base al ID de base de datos nucleotide
+
+        # Busco el ID en la base de datos nucleotide
+        handle_nuc_id = Entrez.esearch(db='nucleotide', term=chr_id, retmax=1000);
+        record_nuc_id = Entrez.read(handle_nuc_id);
+        nuc_id = record_nuc_id['IdList'];
+        # Reviso que se haya encontrado un solo ID, sino tiro error y trabajo solo con el primero
+        if len(nuc_id) > 1:
+            logging.warning('Mas de un resultado para el id "' + chr_id + '". Se usa solo el primero.');
+            print('Lista completa: \n' + str(nuc_id))
+        # Uso el nuc_id para conseguir el record del cromosoma entero en nucleotide
+        handle = Entrez.efetch(db='nucleotide', rettype='gbwithparts', retmode='text', id=nuc_id[0]);
+        record = SeqIO.read(handle, 'genbank');
+        return record
+
+
     def _consulta_secuencia_fasta(self, chr_n, pos_ini, pos_end):
         # Consulta la secuencia para chr_n entre pos_ini y pos_end de los .fasta
 
@@ -252,26 +297,6 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         return seq
 
 
-    def _leer_fasta_chr(self, dir_arch):
-        # Lee el archivo .fasta en dir_arch y devuelve la secuencia
-        # Pensado para una secuencia, si hay mas de una tira error y devuelve la primera
-
-        # Abro el archivo con SeqIO
-        arch_fasta = SeqIO.parse(dir_arch, 'fasta');
-        # Inicializo la variable que se devuelve
-        L_out = [];
-        # Contador para revisar si hay mas de un registro
-        i = 0;
-        # Reviso si tiene mas de una secuencia
-        for record in arch_fasta:
-            i = i + 1;
-            L_out.append(record);
-        if i != 1:
-            logging.warning('Mas de un registro en el .fasta, se devuelve el primero.')
-        L_out = L_out[0];
-        return L_out
-
-
     def _dir_arch(self, chr_n):
         # Devuelve la direccion del archivo correspondiente a chr_n y el nombre del archivo
 
@@ -282,23 +307,6 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         else:
             dir_arch = os.path.join(self.path_fasta, nom_arch);
         return dir_arch, nom_arch
-
-
-    def _consulta_entrez_chr(self, chr_id):
-        # Devuelve objeto record de Entrez conteniendo la secuencia completa de un cromosoma en base al ID de base de datos nucleotide
-
-        # Busco el ID en la base de datos nucleotide
-        handle_nuc_id = Entrez.esearch(db='nucleotide', term=chr_id, retmax=1000);
-        record_nuc_id = Entrez.read(handle_nuc_id);
-        nuc_id = record_nuc_id['IdList'];
-        # Reviso que se haya encontrado un solo ID, sino tiro error y trabajo solo con el primero
-        if len(nuc_id) > 1:
-            logging.warning('Mas de un resultado para el id "' + chr_id + '". Se usa solo el primero.');
-            print('Lista completa: \n' + str(nuc_id))
-        # Uso el nuc_id para conseguir el record del cromosoma entero en nucleotide
-        handle = Entrez.efetch(db='nucleotide', rettype='gbwithparts', retmode='text', id=nuc_id[0]);
-        record = SeqIO.read(handle, 'genbank');
-        return record
 
 
     def _download_chr(self, chr_n, retries=10):
@@ -345,6 +353,26 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
                 tries = tries + 1;
                 print('Fallo intento ' + str(tries) + '.')
         return ret
+
+
+    def _leer_fasta_chr(self, dir_arch):
+        # Lee el archivo .fasta en dir_arch y devuelve la secuencia
+        # Pensado para una secuencia, si hay mas de una tira error y devuelve la primera
+
+        # Abro el archivo con SeqIO
+        arch_fasta = SeqIO.parse(dir_arch, 'fasta');
+        # Inicializo la variable que se devuelve
+        L_out = [];
+        # Contador para revisar si hay mas de un registro
+        i = 0;
+        # Reviso si tiene mas de una secuencia
+        for record in arch_fasta:
+            i = i + 1;
+            L_out.append(record);
+        if i != 1:
+            logging.warning('Mas de un registro en el .fasta, se devuelve el primero.')
+        L_out = L_out[0];
+        return L_out
 
 
     def _obtener_chr(self, contig):
@@ -507,6 +535,19 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         return self
 
 
+    def complemento_secuencia(self, seq, adn=True):
+        # Devuelve el complemento de una secuencia de adn o arn
+        # La secuencia del complemento se devuelve al reves que la referencia
+
+        # Inicializo la variable que se devuelve
+        ret_seq = '';
+        # Recorro seq de atras para adelante
+        for i in range(len(seq)):
+            # Obtengo el complemento de cada posicion de atras para adelante y las agrego a ret_seq
+            ret_seq = ret_seq + self._complemento(seq[-i-1],adn=adn);
+        return ret_seq
+
+
     def leer_bed(self, nom_bed, path_bed='.\\', col_chr=0, col_ini=1, col_end=2, sep='\t', ext='.bed'):
         # Carga todos los rangos en un archivo .bed con los outputs de ChIP-seq a self.dict_range
         # Usa cargar_rango() con los rangos obtenidos
@@ -632,28 +673,74 @@ def _main_test():
 ###################################################################################
 
 
-def complemento(N,adn=True):
-    # Devuelve el complemento de un nucleotido en adn o arn
-    dict_adn = {'T':'A','U':'A','A':'T','C':'G','G':'C','N':'N'};
-    dict_arn = {'T':'A','U':'A','A':'U','C':'G','G':'C','N':'N'};
+def buscar_en_secuencia(busq, seq):
+    # Busca una secuencia "busq" en una secuencia mas larga "seq"
+    # Devuelve la posicion en la que se encontro busq y True si se encuentra busq
+    # Devuelve len(seq)-len(busq)+1 y False si no se encuentra busq
+    pos = 0;
+    encontrado = False;
+    # Recorro una por una las posiciones de seq hasta encontrar busq
+    while pos < (len(seq)-len(busq)+1) and (not encontrado):
+        if seq[pos:pos+len(busq)] == busq:
+            encontrado = True;
+        else:
+            pos += 1;
+    return pos, encontrado
 
-    if not (N in dict_adn.keys()):
-        logging.warning('Nucleotido "' + str(N) + '" no interpretado. Se devuelve N.');
-        ret = 'N';
-    elif adn:
-        ret = dict_adn[N];
-    else:
-        ret = dict_arn[N];
-    return(ret)
+
+def buscar_en_seq_ambas_direcciones(busq, seq):
+    # Funcion que usa buscar_en_secuencia() para buscar todas las ocurrencias de busq en seq
+    # Busca en ambas direcciones y registra varias ocurrencias
+    L_pos = [];
+    loop_1 = True;
+    curr_pos = 0;
+    seq_pos = 0;
+    # Primero corro buscar_en_secuencia() para busq y seq normalmente
+    while loop_1:
+        curr_pos, loop_1 = buscar_en_secuencia(busq, seq[seq_pos:]);
+        if loop_1:
+            L_pos.append(seq_pos+curr_pos);
+            seq_pos = seq_pos + curr_pos + 1;
+    # Despues vuelvo a correr con la secuencia reversa
+    rev_seq = seq_data.complemento_secuencia(seq, adn=True);
+    loop_1 = True;
+    curr_pos = 0;
+    seq_pos = 0;
+    while loop_1:
+        curr_pos, loop_1 = buscar_en_secuencia(busq, rev_seq[seq_pos:]);
+        if loop_1:
+            L_pos.append(-(seq_pos+curr_pos));
+            seq_pos = seq_pos + curr_pos + 1;
+    return L_pos
 
 
-def complemento_secuencia(seq, adn=True):
-    # Devuelve el complemento de una secuencia de adn o arn
-    # La secuencia del complemento se devuelve en la misma orientacion (al reves que la referencia)
-    ret_seq = '';
-    for i in range(len(seq)):
-        ret_seq = ret_seq + complemento(seq[-i-1],adn=adn);
-    return(ret_seq)
+def buscar_en_seq_2dir_unificado(busq, seq):
+    # Funcion que usa buscar_en_secuencia() para buscar todas las ocurrencias de busq en seq
+    # Busca en ambas direcciones y registra varias ocurrencias
+
+    L_pos = [];
+    loop_1 = True;
+    curr_pos = 0;
+    seq_pos = 0;
+    # Primero corro buscar_en_secuencia() para busq y seq normalmente
+    while loop_1:
+        curr_pos, loop_1 = buscar_en_secuencia(busq, seq[seq_pos:]);
+        if loop_1:
+            n = seq_pos+curr_pos;
+            L_pos.append(n-len(seq));
+            seq_pos = seq_pos + curr_pos + 1;
+    # Despues vuelvo a correr con la secuencia reversa
+    rev_seq = seq_data.complemento_secuencia(seq, adn=True);
+    loop_1 = True;
+    curr_pos = 0;
+    seq_pos = 0;
+    while loop_1:
+        curr_pos, loop_1 = buscar_en_secuencia(busq, rev_seq[seq_pos:]);
+        if loop_1:
+            n = seq_pos+curr_pos;
+            L_pos.append(-n-len(busq));
+            seq_pos = seq_pos + curr_pos + 1;
+    return L_pos
 
 
 def max_range(M_num):
