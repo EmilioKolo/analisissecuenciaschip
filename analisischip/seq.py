@@ -46,9 +46,9 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
     # X _consulta_entrez_chr(chr_id): Consigue el elemento correspondiente al cromosoma con SeqIO
     # ? _check_overlap(chr_n, pos_ini, pos_end): Revisa que no haya overlap (ver funciones armadas en este archivo)
     # X _consulta_secuencia_fasta(chr_n, pos_ini, pos_end): Devuelve la secuencia consultando en los archivos .fasta
-    # - Con funcion cargar_rango() funcional, hacer cargar_bed() y cargar_promotores_genoma(rango)
-        # ~ cargar_bed(archivo): Carga todos los rangos en un archivo de output de ChIP-seq
-        # ~ cargar_promotores(rango): Carga todos los rangos alrededor de promotores de genes
+    # X cargar_bed(archivo): Carga todos los rangos en un archivo de output de ChIP-seq
+    # X cargar_promotores(rango): Carga todos los rangos alrededor de promotores de genes
+    # ~ buscar_sitios_union(L_sitios): Crea y devuelve un elemento seq_data con las posiciones de todos los sitios de union en self.dict_rangos
 
 
 
@@ -410,6 +410,29 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         else:
             ret = pos_end;
         return ret, forward
+
+
+    def buscar_sitios_union(self, L_sitios):
+        # Crea y devuelve un elemento seq_data con las posiciones de todos los sitios de union en self.dict_rangos
+
+        # Inicializo el elemento seq_data que se devuelve con los mismos valores de init que el que contiene los rangos
+        seq_out = seq_data(self.genome_name, genome_element=self.genome, path_fasta=self.path_fasta);
+
+        # Recorro cada uno de los cromosomas en self.dict_rangos
+        for key in self.dict_range.keys():
+            L_rangos = self.dict_range[key];
+            chr_n = key;
+            # Recorro cada rango en L_rangos para chr_n
+            for curr_rango in L_rangos:
+                # Inicializo la lista de sitios de union encontrados
+                L_SU = [];
+        ### FALTA: 
+        # Buscar sitios de union en cada uno de los rangos
+            # Pulir funcion para busqueda
+            # Pensar como usar matrices de pesos
+        # Devolver el elemento seq_data con todos los rangos cargados
+        ###
+        return seq_out
 
 
     def cargar_rango(self, chr_n, pos_ini, pos_end, forward=True):
