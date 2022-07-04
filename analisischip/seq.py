@@ -15,6 +15,20 @@ class seq_data(object):
 Clase para cargar datos de secuencia en un genoma dado
 Almacena secuencias en formato chr_n, pos_ini, pos_end
 Descarga archivos .fasta con los cromosomas necesarios para las secuencias usadas
+
+FUNCIONES IMPORTANTES:
+cargar_rango(chr_n, pos_ini, pos_end): Carga un rango de secuencias en self.dict_range (y hace muchos chequeos)
+_chr_check(chr_n): Al cargar, ver si el cromosoma esta presente en self.dict_range o en carpeta path_fasta
+_chr_file_check(chr_n): Busca el archivo en carpeta path_fasta y usa _download_chr(chr_n) si no esta
+_download_chr(chr_n, retries): Ver consulta_secuencia_chr() en 14-PruebaDescargarChr.py
+_buscar_chrid(chr_n): Consigue chrID en base a chr_n, usando self.dict_chrid cargado en __init__
+_cargar_dict_chrid(genome_name): Carga self.dict_chrid para pasar de chr_n a chr_id
+_agregar_chrid(chr_id, chr_n): Revisa que chr_n no este en self.dict_chrid y agrega chr_id si no esta
+_consulta_entrez_chr(chr_id): Consigue el elemento correspondiente al cromosoma con SeqIO
+_consulta_secuencia_fasta(chr_n, pos_ini, pos_end): Devuelve la secuencia consultando en los archivos .fasta
+cargar_bed(archivo): Carga todos los rangos en un archivo de output de ChIP-seq
+cargar_promotores(rango): Carga todos los rangos alrededor de promotores de genes
+buscar_sitios_union(L_sitios): Crea y devuelve un elemento seq_data con las posiciones de todos los sitios de union en self.dict_rangos
     '''
     def __init__(self, genome_name, genome_element='', path_fasta=''):
         # M_seq almacena todos los rangos de secuencias
@@ -33,23 +47,6 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         # Cargo dict_chrid para pasar de chr_n a chr_id
         self._cargar_dict_chrid(genome_name);
         return None
-
-
-    ## FUNCIONES:
-    # X cargar_rango(chr_n, pos_ini, pos_end): Carga un rango de secuencias en self.dict_range (y hace muchos chequeos)
-    # X _chr_check(chr_n): Al cargar, ver si el cromosoma esta presente en self.dict_range o en carpeta path_fasta
-    # X _chr_file_check(chr_n): Busca el archivo en carpeta path_fasta y usa _download_chr(chr_n) si no esta
-    # X _download_chr(chr_n, retries): Ver consulta_secuencia_chr() en 14-PruebaDescargarChr.py
-    # X _buscar_chrid(chr_n): Consigue chrID en base a chr_n, usando self.dict_chrid cargado en __init__
-    # X _cargar_dict_chrid(genome_name): Carga self.dict_chrid para pasar de chr_n a chr_id
-    # X _agregar_chrid(chr_id, chr_n): Revisa que chr_n no este en self.dict_chrid y agrega chr_id si no esta
-    # X _consulta_entrez_chr(chr_id): Consigue el elemento correspondiente al cromosoma con SeqIO
-    # ? _check_overlap(chr_n, pos_ini, pos_end): Revisa que no haya overlap (ver funciones armadas en este archivo)
-    # X _consulta_secuencia_fasta(chr_n, pos_ini, pos_end): Devuelve la secuencia consultando en los archivos .fasta
-    # X cargar_bed(archivo): Carga todos los rangos en un archivo de output de ChIP-seq
-    # X cargar_promotores(rango): Carga todos los rangos alrededor de promotores de genes
-    # ~ buscar_sitios_union(L_sitios): Crea y devuelve un elemento seq_data con las posiciones de todos los sitios de union en self.dict_rangos
-
 
 
     def _agregar_chrid(self, chr_id, chr_n):
@@ -107,10 +104,6 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
             if len(curr_SU) > 0:
                 # Si se encontro un sitio de union, tiene largo mayor a 0 y lo registro en L_SU
                 L_SU.append(curr_SU[:]);
-        ### FALTA:
-        # X Probar que i+1, i+len(seq_union) es buen valor para pos_ini, pos_end
-        # Probar que i+1, i+len(seq_union) funciona bien con secuencias en cromosomas
-        ###
         return L_SU
 
 
@@ -493,9 +486,6 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
                     for sitio_encontrado in L_SU:
                         # Depende de como devuelvo el sitio en _buscar_SU_en_seq()
                         seq_out.cargar_rango(chr_n, sitio_encontrado[0], sitio_encontrado[1], forward=sitio_encontrado[2]);
-        ### FALTA: 
-        # Probar que los rangos cargados se devuelvan correctamente para curr_pos_ini
-        ###
         return seq_out
 
 
@@ -638,21 +628,24 @@ def _main_test():
     # Pruebo inicializar seq_data
     print('>Inicializando base_test.')
     base_test = seq_data('mm9', path_fasta=path_usado); # D:\\Archivos doctorado\\Genomas\\ 
-    print('>base_test inicializado. Cargando rangos para probar busqueda de sitios de union.')
-    base_test.cargar_rango('chr1',10000100,10000200);
-    base_test.cargar_rango('chr1',10200100,10200200);
-    base_test.cargar_rango('chr1',10001000,10002000);
-    print('>Rangos cargados. Buscando sitios de union.')
-    for i in base_test.dict_range['chr1']:
-        print(i)
-        print(base_test._consulta_secuencia_fasta('chr1',i[0],i[1]))
-    L_sitios = ['AAGTG'];
-    sitios_test = base_test.buscar_sitios_union_lista(L_sitios);
-    print('>Rangos de sitios de union encontrados.')
-    print(sitios_test.dict_range)
-    for i in sitios_test.dict_range['chr1']:
-        print(i)
-        print(sitios_test._consulta_secuencia_fasta('chr1',i[0],i[1]))
+    print('>base_test inicializado. ')
+
+
+    #print('>base_test inicializado. Cargando rangos para probar busqueda de sitios de union.')
+    #base_test.cargar_rango('chr1',10000100,10000200);
+    #base_test.cargar_rango('chr1',10200100,10200200);
+    #base_test.cargar_rango('chr1',10001000,10002000);
+    #print('>Rangos cargados. Buscando sitios de union.')
+    #for i in base_test.dict_range['chr1']:
+    #    print(i)
+    #    print(base_test._consulta_secuencia_fasta('chr1',i[0],i[1]))
+    #L_sitios = ['AAGTG'];
+    #sitios_test = base_test.buscar_sitios_union_lista(L_sitios);
+    #print('>Rangos de sitios de union encontrados.')
+    #print(sitios_test.dict_range)
+    #for i in sitios_test.dict_range['chr1']:
+    #    print(i)
+    #    print(sitios_test._consulta_secuencia_fasta('chr1',i[0],i[1]))
 
     #print('>base_test inicializado. Probando busqueda de seq en seq.')
     #seq_ref = 'ATATTACGATCGT';
@@ -702,8 +695,7 @@ def _main_test():
     #print('>Rango cargado en chr2. Devolviendo dict_range en base_test.')
     #print(base_test.dict_range)
 
-
-    L_out = sitios_test.dict_range;
+    L_out = base_test.dict_range;
     return L_out
 
 
