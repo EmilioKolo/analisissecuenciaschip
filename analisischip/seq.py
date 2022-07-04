@@ -82,20 +82,34 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         return ret
 
 
-    def _buscar_SU_en_seq(self, seq_union, seq_referencia):
+    def _buscar_SU_en_seq(self, seq_union, seq_referencia, pos_ini_ref=0):
         # Busca todas las ocurrencias de seq_union en seq_referencia
         # Devuelve una lista de sitios de union en formato [pos_ini, pos_end, forward]
+        # En vez de recorrer dos veces o registrar distintos numeros para forward/reverse, registra pos_ini y pos_end con booleano forward
 
         # Inicializo la lista de sitios de union
         L_SU = [];
-        # Recorro seq_referencia en direccion forward
-        for i in range(len(seq_referencia)-len(seq_union)):
+        # Recorro seq_referencia
+        for i in range(len(seq_referencia)-len(seq_union)+1):
+            # Inicializo curr_SU
+            curr_SU = [];
             # Defino la secuencia que se revisa
-            curr_seq = seq_referencia[i:i+len(seq_union)];
+            curr_seq = str(seq_referencia[i:i+len(seq_union)]).upper();
+            # Defino el reverso
+            curr_seq_rev = str(self.complemento_secuencia(curr_seq)).upper();
+            # Si seq_union es igual a curr_seq, registro pos_ini, pos_end, True
+            if str(seq_union).upper() == str(curr_seq).upper():
+                curr_SU = [pos_ini_ref+i+1, pos_ini_ref+i+len(seq_union), True];
+            # Si seq_union es igual a curr_seq_rev, registro pos_ini, pos_end, False
+            elif str(seq_union).upper() == str(curr_seq_rev).upper():
+                curr_SU = [pos_ini_ref+i+1, pos_ini_ref+i+len(seq_union), False];
+            # Reviso si curr_SU esta registrado
+            if len(curr_SU) > 0:
+                # Si se encontro un sitio de union, tiene largo mayor a 0 y lo registro en L_SU
+                L_SU.append(curr_SU[:]);
         ### FALTA:
-        # Ver script de busqueda de sitios de union en secuencia 
-        # Funciones buscar_en_seq_ambas_direcciones() y buscar_seq_2dir_unificado()
-        # Copiadas de archivo 4-RevisarSitiosUnion.py 
+        # X Probar que i+1, i+len(seq_union) es buen valor para pos_ini, pos_end
+        # Probar que i+1, i+len(seq_union) funciona bien con secuencias en cromosomas
         ###
         return L_SU
 
@@ -474,15 +488,13 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
                 # Recorro cada sitio buscado en L_sitios
                 for sitio_buscado in L_sitios:
                     # Obtengo una lista de posiciones para los sitios de union encontrados
-                    L_SU = self._buscar_SU_en_seq(sitio_buscado, seq_rango);
+                    L_SU = self._buscar_SU_en_seq(sitio_buscado, seq_rango, pos_ini_ref=curr_pos_ini);
                     # Por cada sitio encontrado, cargo un rango en seq_out
                     for sitio_encontrado in L_SU:
-                        ##### Ver como devuelvo el sitio en _buscar_SU_en_seq()
+                        # Depende de como devuelvo el sitio en _buscar_SU_en_seq()
                         seq_out.cargar_rango(chr_n, sitio_encontrado[0], sitio_encontrado[1], forward=sitio_encontrado[2]);
         ### FALTA: 
-        # Buscar sitios de union en cada uno de los rangos
-            # Hacer funcion para busqueda (ver anteriores)
-        # Devolver seq_out con todos los rangos cargados
+        # Probar que los rangos cargados se devuelvan correctamente para curr_pos_ini
         ###
         return seq_out
 
@@ -626,15 +638,30 @@ def _main_test():
     # Pruebo inicializar seq_data
     print('>Inicializando base_test.')
     base_test = seq_data('mm9', path_fasta=path_usado); # D:\\Archivos doctorado\\Genomas\\ 
-    print('>base_test inicializado. Probando carga de archivo .bed.')
-    nom_bed = 'Dupays2015';
-    path_bed = 'D:\\Dropbox\\Doctorado\\3-Genes transactivados rio abajo\\0-Fuentes\\Papers ChIP-seq\\';
-    print('>Probando leer_bed con "' + nom_bed + '" en "' + path_bed + '".')
-    base_test.leer_bed(nom_bed, path_bed);
-    print('>Archivo leido y cargado. Mostrando dict_range.')
-    for key in base_test.dict_range.keys():
-        print(key)
-        print(base_test.dict_range[key])
+    print('>base_test inicializado.')
+
+
+    #print('>base_test inicializado. Probando busqueda de seq en seq.')
+    #seq_ref = 'ATATTACGATCGT';
+    #seq_busq = 'TCGT';
+    #L_SU = base_test._buscar_SU_en_seq(seq_busq, seq_ref);
+    #print('Secuencia de referencia:')
+    #print(seq_ref)
+    #print('Secuencia buscada:')
+    #print(seq_busq)
+    #print('Posiciones encontradas:')
+    #for SU in L_SU:
+    #    print(SU)
+
+    #print('>base_test inicializado. Probando carga de archivo .bed.')
+    #nom_bed = 'Dupays2015';
+    #path_bed = 'D:\\Dropbox\\Doctorado\\3-Genes transactivados rio abajo\\0-Fuentes\\Papers ChIP-seq\\';
+    #print('>Probando leer_bed con "' + nom_bed + '" en "' + path_bed + '".')
+    #base_test.leer_bed(nom_bed, path_bed);
+    #print('>Archivo leido y cargado. Mostrando dict_range.')
+    #for key in base_test.dict_range.keys():
+    #    print(key)
+    #    print(base_test.dict_range[key])
 
     #print('>base_test inicializado. Inicializando revision de genoma.')
     #base_test.cargar_promotores([-1500, 1500]);

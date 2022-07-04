@@ -4,7 +4,7 @@ from setuptools import setup
 this_directory = Path(__file__).parent;
 long_description = (this_directory / "README.md").read_text();
 
-VERSION = '0.0.1';
+VERSION = '0.1.1';
 DESCRIPTION = 'Herramientas para análisis de secuencias en resultados de ChIP-seq.';
 PACKAGE_NAME = 'analisischip';
 AUTHOR = 'Emilio Kolomenski';
