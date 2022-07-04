@@ -488,7 +488,7 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
                 # Recorro cada sitio buscado en L_sitios
                 for sitio_buscado in L_sitios:
                     # Obtengo una lista de posiciones para los sitios de union encontrados
-                    L_SU = self._buscar_SU_en_seq(sitio_buscado, seq_rango, pos_ini_ref=curr_pos_ini);
+                    L_SU = self._buscar_SU_en_seq(sitio_buscado, seq_rango, pos_ini_ref=curr_pos_ini-1);
                     # Por cada sitio encontrado, cargo un rango en seq_out
                     for sitio_encontrado in L_SU:
                         # Depende de como devuelvo el sitio en _buscar_SU_en_seq()
@@ -638,8 +638,21 @@ def _main_test():
     # Pruebo inicializar seq_data
     print('>Inicializando base_test.')
     base_test = seq_data('mm9', path_fasta=path_usado); # D:\\Archivos doctorado\\Genomas\\ 
-    print('>base_test inicializado.')
-
+    print('>base_test inicializado. Cargando rangos para probar busqueda de sitios de union.')
+    base_test.cargar_rango('chr1',10000100,10000200);
+    base_test.cargar_rango('chr1',10200100,10200200);
+    base_test.cargar_rango('chr1',10001000,10002000);
+    print('>Rangos cargados. Buscando sitios de union.')
+    for i in base_test.dict_range['chr1']:
+        print(i)
+        print(base_test._consulta_secuencia_fasta('chr1',i[0],i[1]))
+    L_sitios = ['AAGTG'];
+    sitios_test = base_test.buscar_sitios_union_lista(L_sitios);
+    print('>Rangos de sitios de union encontrados.')
+    print(sitios_test.dict_range)
+    for i in sitios_test.dict_range['chr1']:
+        print(i)
+        print(sitios_test._consulta_secuencia_fasta('chr1',i[0],i[1]))
 
     #print('>base_test inicializado. Probando busqueda de seq en seq.')
     #seq_ref = 'ATATTACGATCGT';
@@ -690,7 +703,7 @@ def _main_test():
     #print(base_test.dict_range)
 
 
-    L_out = base_test.dict_range;
+    L_out = sitios_test.dict_range;
     return L_out
 
 
