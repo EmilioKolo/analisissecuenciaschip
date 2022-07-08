@@ -609,15 +609,46 @@ buscar_sitios_union(L_sitios): Crea y devuelve un elemento seq_data con las posi
         return self
 
 
-    def pipeline_chipseq(self):
-        return self
+    def pipeline_chipseq(self, L_bed, L_sitios=[], path_bed='.\\', col_chr=0, col_ini=1, col_end=2, sep='\t', ext='.bed', self_reset=True):
+        # Registra todos los peaks de chip-seq en archivos .bed cuyos nombres se listan en L_bed
+        # Todos los archivos tienen que estar en la misma carpeta (path_bed)
+        # Si L_sitios contiene sitios de union, se devuelve el output de buscar_sitios_union_lista(L_sitios)
+        # self_reset determina si se vacia el diccionario antes de agregar los rangos del pipeline
+
+        # Inicializo el objeto clase seq_data que se devuelve
+        seq_out = self; # Si L_sitios contiene sitios de union, se devuelve el output de buscar_sitios_union_lista(L_sitios)
+
+        ### FALTA:
+        # Agregar todos los rangos de archivos en L_bed
+        # Buscar sitios de union de L_sitios solo si no es lista vacia
+        # Generar graficos?
+        ###
+        return seq_out
 
 
-    def pipeline_promotores(self):
-        return self
+    def pipeline_promotores(self, rango_promotor, L_sitios=[], genome_version='', organism='', self_reset=True):
+        # Registra todos los sitios de union en promotores del genoma alrededor del +1 dado por rango_promotor
+        # rango_promotor contiene (pos_ini, pos_end), cuyos valores se suman a la posicion del +1 para determinar el rango cargado
+        # Si L_sitios contiene sitios de union, se devuelve el output de buscar_sitios_union_lista(L_sitios)
+        # self_reset determina si se vacia el diccionario antes de agregar los rangos del pipeline
+
+        # Inicializo el objeto clase seq_data que se devuelve
+        seq_out = self; # Si L_sitios contiene sitios de union, se devuelve el output de buscar_sitios_union_lista(L_sitios)
+
+        ### FALTA:
+        # Agregar los rangos con cargar_promotores()
+        # Buscar sitios de union de L_sitios solo si no es lista vacia
+        # Generar graficos?
+        ###
+        return seq_out
 
 
-    def superposicion_sitios(self):
+    def superposicion_sitios(self, seq_comparada):
+        ### FALTA:
+        # Determinar especificamente que hago con esta funcion
+            # ? Devuelvo seq_out con rangos que solapen entre self y seq_comparada?
+            # ? Devuelvo diccionarios de rangos que solapan, rangos que no solapan, rangos and, rangos or?
+        ###
         return self
 
 
