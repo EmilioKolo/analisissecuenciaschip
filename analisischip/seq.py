@@ -609,6 +609,17 @@ buscar_sitios_union(L_sitios): Crea y devuelve un elemento seq_data con las posi
         return self
 
 
+    def pipeline_chipseq(self):
+        return self
+
+
+    def pipeline_promotores(self):
+        return self
+
+
+    def superposicion_sitios(self):
+        return self
+
 
 #################################### FUNCIONES ####################################
 
