@@ -1,5 +1,6 @@
 # Generales
 import os
+from ossaudiodev import SNDCTL_SEQ_OUTOFBAND
 import time
 import logging
 # Analisis de secuencias y genomas
@@ -15,20 +16,6 @@ class seq_data(object):
 Clase para cargar datos de secuencia en un genoma dado
 Almacena secuencias en formato chr_n, pos_ini, pos_end
 Descarga archivos .fasta con los cromosomas necesarios para las secuencias usadas
-
-FUNCIONES IMPORTANTES:
-cargar_rango(chr_n, pos_ini, pos_end): Carga un rango de secuencias en self.dict_range (y hace muchos chequeos)
-_chr_check(chr_n): Al cargar, ver si el cromosoma esta presente en self.dict_range o en carpeta path_fasta
-_chr_file_check(chr_n): Busca el archivo en carpeta path_fasta y usa _download_chr(chr_n) si no esta
-_download_chr(chr_n, retries): Ver consulta_secuencia_chr() en 14-PruebaDescargarChr.py
-_buscar_chrid(chr_n): Consigue chrID en base a chr_n, usando self.dict_chrid cargado en __init__
-_cargar_dict_chrid(genome_name): Carga self.dict_chrid para pasar de chr_n a chr_id
-_agregar_chrid(chr_id, chr_n): Revisa que chr_n no este en self.dict_chrid y agrega chr_id si no esta
-_consulta_entrez_chr(chr_id): Consigue el elemento correspondiente al cromosoma con SeqIO
-_consulta_secuencia_fasta(chr_n, pos_ini, pos_end): Devuelve la secuencia consultando en los archivos .fasta
-cargar_bed(archivo): Carga todos los rangos en un archivo de output de ChIP-seq
-cargar_promotores(rango): Carga todos los rangos alrededor de promotores de genes
-buscar_sitios_union(L_sitios): Crea y devuelve un elemento seq_data con las posiciones de todos los sitios de union en self.dict_rangos
     '''
     def __init__(self, genome_name, genome_element='', path_fasta=''):
         # M_seq almacena todos los rangos de secuencias
@@ -46,6 +33,8 @@ buscar_sitios_union(L_sitios): Crea y devuelve un elemento seq_data con las posi
             logging.warning('No se definio path_fasta. Se buscan y descargan archivos de secuencia en directorio actual.');
         # Cargo dict_chrid para pasar de chr_n a chr_id
         self._cargar_dict_chrid(genome_name);
+        # Diccionario para anotar los genes que esten cerca de los rangos en self.dict_range
+        self.genes_cercanos = {};
         return None
 
 
@@ -146,6 +135,17 @@ buscar_sitios_union(L_sitios): Crea y devuelve un elemento seq_data con las posi
                                'chr21':'NC_000021.9', 'chr22':'NC_000022.11', 'chrX':'NC_000023.11', 'chrY':'NC_000024.10',
                                'chrM':'NC_012920.1', 'chrMT':'NC_012920.1'};
             self.genome_name = 'hg19';
+        return self
+
+
+    def _cargar_gen_cercano(self, gene_element, chr_n, pos_ini_SU, pos_end_SU, forward):
+        # Funcion para cargar un gen a self.genes_cercanos
+
+        ### FALTA:
+        # ? Revisar que el cromosoma exista (creo que no es necesario)
+        # Revisar que el gen no este ya en el diccionario
+        # Cargar el rango y el gen al diccionario
+        ###
         return self
 
 
@@ -460,12 +460,19 @@ buscar_sitios_union(L_sitios): Crea y devuelve un elemento seq_data con las posi
         return ret, forward
 
 
+    def _reset(self):
+        # Reinicia la funcion, borrando los rangos cargados e informacion acoplada
+        self.dict_range = {};
+        self.genes_cercanos = {};
+        return self
+
+
     def buscar_sitios_union_lista(self, L_sitios):
         # Crea y devuelve un elemento seq_data con las posiciones de todos los sitios de union en self.dict_rangos
         # Busca una lista de sitios de union posibles
 
         # Inicializo el elemento seq_data que se devuelve con los mismos valores de init que el que contiene los rangos
-        seq_out = seq_data(self.genome_name, genome_element=self.genome, path_fasta=self.path_fasta);
+        seq_out = self.clonar();
         # Recorro cada uno de los cromosomas en self.dict_rangos
         for key in self.dict_range.keys():
             L_rangos = self.dict_range[key];
@@ -517,7 +524,6 @@ buscar_sitios_union(L_sitios): Crea y devuelve un elemento seq_data con las posi
         if self.genome == '':
             # Si no esta cargado, uso self._obtener_genoma() para cargarlo
             self._obtener_genoma(genome_version, organism);
-
         # Recorro cada gen en el genoma
         for gene_object in self.genome.genes():
             # Solo agarro protein_coding
@@ -530,11 +536,23 @@ buscar_sitios_union(L_sitios): Crea y devuelve un elemento seq_data con las posi
                 if len(chr_n) > 0:
                     # Si el gen es forward, registro el rango normalmente
                     if forward:
-                        self.cargar_rango(chr_n, pos0+rango_promotor[0], pos0+rango_promotor[1],forward=forward);
+                        pos_ini_SU = pos0+rango_promotor[0];
+                        pos_end_SU = pos0+rango_promotor[1];
                     # Si es reverse, tengo que usar rango_promotor al reves y restarlo
                     else:
-                        self.cargar_rango(chr_n, pos0-rango_promotor[1], pos0-rango_promotor[0],forward=forward);
+                        pos_ini_SU = pos0-rango_promotor[1];
+                        pos_end_SU = pos0-rango_promotor[0];
+                    # Cargo las posiciones determinadas con self.cargar_rango()
+                    self.cargar_rango(chr_n, pos_ini_SU, pos_end_SU, forward=forward);
+                    # Cargo el gen en self.genes_cercanos
+                    self._cargar_gen_cercano(gene_object, chr_n, pos_ini_SU, pos_end_SU, forward);
         return self
+
+
+    def clonar(self):
+        # Genera un elemento seq_data() vacio con la info de self
+        seq_out = seq_data(self.genome_name, genome_element=self.genome, path_fasta=self.path_fasta);
+        return seq_out
 
 
     def complemento_secuencia(self, seq, adn=True):
@@ -609,7 +627,7 @@ buscar_sitios_union(L_sitios): Crea y devuelve un elemento seq_data con las posi
         return self
 
 
-    def pipeline_chipseq(self, L_bed, L_sitios=[], path_bed='.\\', col_chr=0, col_ini=1, col_end=2, sep='\t', ext='.bed', self_reset=True):
+    def pipeline_chipseq(self, L_bed:list, L_sitios=[], path_bed='.\\', col_chr=0, col_ini=1, col_end=2, sep='\t', ext='.bed', self_reset=True):
         # Registra todos los peaks de chip-seq en archivos .bed cuyos nombres se listan en L_bed
         # Todos los archivos tienen que estar en la misma carpeta (path_bed)
         # Si L_sitios contiene sitios de union, se devuelve el output de buscar_sitios_union_lista(L_sitios)
@@ -618,11 +636,16 @@ buscar_sitios_union(L_sitios): Crea y devuelve un elemento seq_data con las posi
         # Inicializo el objeto clase seq_data que se devuelve
         seq_out = self; # Si L_sitios contiene sitios de union, se devuelve el output de buscar_sitios_union_lista(L_sitios)
 
-        ### FALTA:
-        # Agregar todos los rangos de archivos en L_bed
-        # Buscar sitios de union de L_sitios solo si no es lista vacia
-        # Generar graficos?
-        ###
+        # Si self_reset es True, se reinicia self.dict_range
+        if self_reset:
+            self._reset();
+        # Recorro cada elemento de L_bed
+        for nom_bed in L_bed:
+            self.leer_bed(nom_bed, path_bed=path_bed, col_chr=col_chr, col_ini=col_ini, col_end=col_end, sep=sep, ext=ext);
+        # Reviso que el largo de L_sitios sea mayor a 0
+        if len(L_sitios) > 0:
+            # Si hay sitios de union dados, se inicializa otro objeto para devolver
+            seq_out = self.buscar_sitios_union_lista(L_sitios);
         return seq_out
 
 
@@ -635,15 +658,21 @@ buscar_sitios_union(L_sitios): Crea y devuelve un elemento seq_data con las posi
         # Inicializo el objeto clase seq_data que se devuelve
         seq_out = self; # Si L_sitios contiene sitios de union, se devuelve el output de buscar_sitios_union_lista(L_sitios)
 
-        ### FALTA:
-        # Agregar los rangos con cargar_promotores()
-        # Buscar sitios de union de L_sitios solo si no es lista vacia
-        # Generar graficos?
-        ###
+        # Si self_reset es True, se reinicia self.dict_range
+        if self_reset:
+            self._reset();
+        # Cargo los promotores con rango_promotor
+        self.cargar_promotores(rango_promotor, genome_version=genome_version, organism=organism);
+        # Reviso que el largo de L_sitios sea mayor a 0
+        if len(L_sitios) > 0:
+            # Si hay sitios de union dados, se inicializa otro objeto para devolver
+            seq_out = self.buscar_sitios_union_lista(L_sitios);
         return seq_out
 
 
-    def superposicion_sitios(self, seq_comparada):
+    def superposicion_sitios(self, seq_data_comparada):
+        # Devuelvo elementos seq_out con rangos que solapan entre self y seq_data_comparada
+
         ### FALTA:
         # Determinar especificamente que hago con esta funcion
             # ? Devuelvo seq_out con rangos que solapen entre self y seq_comparada?
