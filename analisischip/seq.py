@@ -24,6 +24,7 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         # Genome element sirve para acelerar cosas pero es necesario si no se corre cargar_promotores_genoma()
 
         # dict_range registra los rangos por chr_n
+        # Formato: {chr_n:[(pos_ini, pos_end, forward),],}
         self.dict_range = {};
         # Registro el genoma y su nombre
         self.genome_name = genome_name;
@@ -34,6 +35,7 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         # Cargo dict_chrid para pasar de chr_n a chr_id
         self._cargar_dict_chrid(genome_name);
         # Diccionario para anotar los genes que esten cerca de los rangos en self.dict_range
+        # Formato: {chr_n:[gen_id, [(pos_ini, pos_end, forward),]],}
         self.genes_cercanos = {};
         return None
 
@@ -140,12 +142,44 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
 
     def _cargar_gen_cercano(self, gene_element, chr_n, pos_ini_SU, pos_end_SU, forward):
         # Funcion para cargar un gen a self.genes_cercanos
+        # Carga un diccionario con chr_n por keys, cada key apuntando a una lista
+        # Cada lista contiene un gen y una lista de rangos asociados
 
-        ### FALTA:
-        # ? Revisar que el cromosoma exista (creo que no es necesario)
-        # Revisar que el gen no este ya en el diccionario
-        # Cargar el rango y el gen al diccionario
-        ###
+        # Defino el id de gene_element
+        gene_id = gene_element.gene_id;
+        # Defino el rango a cargar
+        rango_a_cargar = [pos_ini_SU, pos_end_SU, forward];
+        # Reviso si chr_n no esta en self.genes_cercanos.keys()
+        if not (chr_n in self.genes_cercanos.keys()):
+            # Agrego chr_n como key con una lista vacia si no esta en keys()
+            self.genes_cercanos[chr_n] = [];
+        # Reviso si gene_id esta en self.genes_cercanos[chr_n][i][0]
+        sitio_repetido = False;
+        i = 0;
+        while not(sitio_repetido) and i < len(self.genes_cercanos[chr_n]):
+            # Si gene_id ya esta anotado, veo si el mismo rango ya existe
+            if self.genes_cercanos[chr_n][i][0] == gene_id:
+                L_rangos_gen = self.genes_cercanos[chr_n][i][1];
+                # Si gene_id ya esta anotado, cierro el while rio arriba y empiezo otro rio abajo
+                sitio_repetido = True;
+                # Recorro todos los rangos registrados en gene_id
+                rango_repetido = False;
+                j = 0;
+                while not(rango_repetido) and j < len(L_rangos_gen):
+                    rango_gen = L_rangos_gen[j];
+                    # Reviso si ya existe el rango asociado al gen
+                    # Puede ser que rango_a_cargar==rango_gen funcione
+                    if rango_gen[0] == pos_ini_SU and rango_gen[1] == pos_end_SU and rango_gen[2] == forward:
+                        rango_repetido = True;
+                    else:
+                        j += 1;
+                # Si pase por todos los rangos y rango_repetido sigue siendo False, registro el rango
+                if not(rango_repetido):
+                    self.genes_cercanos[chr_n][i][1].append(rango_a_cargar);
+            i += 1;
+        # Si pase por todos los genes y sitio_repetido sigue siendo False, registro el gen con el rango
+        if not(sitio_repetido):
+            self.genes_cercanos[chr_n].append([gene_id,[rango_a_cargar]])
         return self
 
 
@@ -673,12 +707,20 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
     def superposicion_sitios(self, seq_data_comparada):
         # Devuelvo elementos seq_out con rangos que solapan entre self y seq_data_comparada
 
-        ### FALTA:
-        # Determinar especificamente que hago con esta funcion
-            # ? Devuelvo seq_out con rangos que solapen entre self y seq_comparada?
-            # ? Devuelvo diccionarios de rangos que solapan, rangos que no solapan, rangos and, rangos or?
-        ###
+        # Inicializo la variable que se devuelve
+        seq_out = self.clonar();
+
+        # Recorro los elementos de seq_data_comparada
+        for key in seq_data_comparada.dict_range.keys():
+            ### FALTA:
+            ## VER: Si puedo usar seq_data_comparada.genes_cercanos o self.genes_cercanos para que ande mejor
+            # Recorrer self.dict_range[key] y seq_data_comparada.dict_range[key] para ver si los rangos se solapan
+            # Solo registro rangos de seq_data_comparada que esten completamente dentro de rangos en self
+            # Rangos solapados se registran en seq_out
+            ###
+            pass
         return self
+
 
 
 #################################### FUNCIONES ####################################
