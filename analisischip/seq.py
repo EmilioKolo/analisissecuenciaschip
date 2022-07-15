@@ -26,20 +26,22 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
 
         # dict_range registra los rangos por chr_n
         # Formato: {chr_n:[(pos_ini, pos_end, forward),],}
-        self.dict_range = {};
+        self.dict_range = {}; 
         # Registro el genoma y su nombre
-        self.genome_name = genome_name;
-        self.genome = genome_element;
-        self.path_fasta = path_fasta;
+        self.genome_name = genome_name; 
+        self.genome = genome_element; 
+        self.path_fasta = path_fasta; 
         if path_fasta == '':
-            logging.warning('No se definio path_fasta. Se buscan y descargan archivos de secuencia en directorio actual.');
+            logging.warning('No se definio path_fasta. Se buscan y descargan archivos de secuencia en directorio actual.'); 
         # Cargo dict_chrid para pasar de chr_n a chr_id
-        self._cargar_dict_chrid(genome_name);
+        self._cargar_dict_chrid(genome_name); 
         # Diccionario para anotar los genes que esten cerca de los rangos en self.dict_range
         # Formato: {chr_n:[gen_id, [(pos_ini, pos_end, forward),]],}
-        self.genes_cercanos = {};
+        self.genes_cercanos = {}; 
         # Creo diccionario para definir que funciones van en verbose
-        self.dict_verbose = {};
+        self.dict_verbose = {}; 
+        # Defino cantidad de avisos por verbose
+        self.verbose_n = 10; 
         return None
 
 
@@ -567,9 +569,9 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
             chr_n = key; 
             # Display
             if verbose:
-                print('\tInicializando revision de ' + str(chr_n))
+                print('>Iniciando revision de ' + str(chr_n) + '. Cantidad de rangos: ' + str(len(L_rangos)) + '.')
             cont_verbose = 0; 
-            len_verbose = int(len(L_rangos)/20); 
+            len_verbose = int(len(L_rangos)/self.verbose_n); 
             # Recorro cada rango en L_rangos para chr_n
             for curr_rango in L_rangos:
                 # Defino pos_ini y pos_end para curr_rango
