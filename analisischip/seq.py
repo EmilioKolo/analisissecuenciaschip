@@ -1,6 +1,5 @@
 # Generales
 import os
-from ossaudiodev import SNDCTL_SEQ_OUTOFBAND
 import time
 import logging
 # Analisis de secuencias y genomas
@@ -17,6 +16,8 @@ Clase para cargar datos de secuencia en un genoma dado
 Almacena secuencias en formato chr_n, pos_ini, pos_end
 Descarga archivos .fasta con los cromosomas necesarios para las secuencias usadas
     '''
+
+
     def __init__(self, genome_name, genome_element='', path_fasta=''):
         # M_seq almacena todos los rangos de secuencias
         # Rangos almacenados en formato chr_n, pos_ini, pos_end
@@ -37,6 +38,8 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         # Diccionario para anotar los genes que esten cerca de los rangos en self.dict_range
         # Formato: {chr_n:[gen_id, [(pos_ini, pos_end, forward),]],}
         self.genes_cercanos = {};
+        # Creo diccionario para definir que funciones van en verbose
+        self.dict_verbose = {};
         return None
 
 
@@ -68,6 +71,31 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
             logging.error('No se pudo encontrar ' + chr_n + ' en dict_chrid. Se puede agregar manualmente con self._agregar_chrid(chr_id, chr_n).')
             ret = '';
         return ret
+
+
+    def _buscar_rango_contenido(self, chr_n, pos_ini, pos_end):
+        # Busca si un rango dado se encuentra contenido entre los rangos de self.dict_range
+        # Devuelve True si lo encuentra y False si no
+
+        # Inicializo la variable que se devuelve como False
+        rango_encontrado = False;
+        # Por las dudas veo si chr_n esta entre self.dict_range.keys()
+        if chr_n in self.dict_range.keys():
+            # Inicializo las variables de ciclo while
+            i = 0;
+            # Recorro self.dict_range[chr_n]
+            while not(rango_encontrado) and i < len(self.dict_range[chr_n]):
+                # Defino el rango actual
+                range_self = self.dict_range[chr_n][i];
+                # Reviso si range_self contiene pos_ini y pos_end
+                if range_self[0] < pos_ini and range_self[1] > pos_end:
+                    rango_encontrado = True;
+                else:
+                    i += 1;
+        # Si no encuentra la key tiro warning
+        else:
+            logging.warning('No se encontro la key ' + str(chr_n) + ' en self.dict_range')
+        return rango_encontrado
 
 
     def _buscar_SU_en_seq(self, seq_union, seq_referencia, pos_ini_ref=0):
@@ -146,7 +174,12 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         # Cada lista contiene un gen y una lista de rangos asociados
 
         # Defino el id de gene_element
-        gene_id = gene_element.gene_id;
+        try:
+            # Si es un elemento de Ensembl, lo extraigo
+            gene_id = gene_element.gene_id;
+        except:
+            # Si no es elemento de Ensembl, lo cargo como string
+            gene_id = str(gene_element);
         # Defino el rango a cargar
         rango_a_cargar = [pos_ini_SU, pos_end_SU, forward];
         # Reviso si chr_n no esta en self.genes_cercanos.keys()
@@ -181,6 +214,18 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         if not(sitio_repetido):
             self.genes_cercanos[chr_n].append([gene_id,[rango_a_cargar]])
         return self
+
+
+    def _check_verbose(self, key):
+        # Devuelve el valor de verbose para key
+        # Si key no esta en dict_verbose, devuelve false
+
+        # Inicializo la variable que se devuelve
+        verbose = False; 
+        # Reviso que key este en dict_verbose
+        if key in self.dict_verbose.keys():
+            verbose = self.dict_verbose[key]; 
+        return verbose
 
 
     def _chr_check(self, chr_n):
@@ -272,34 +317,34 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         # Consulta la secuencia para chr_n entre pos_ini y pos_end de los .fasta
 
         # Inicializo la variable que se devuelve
-        seq = '';
+        seq = ''; 
 
         # Defino el nombre y direccion del archivo a buscar
-        dir_arch, nom_arch = self._dir_arch(chr_n);
+        dir_arch, nom_arch = self._dir_arch(chr_n); 
         # Intento abrir el archivo correspondiente
         try:
             # Abro el archivo para que tire error si no existe
-            F = open(dir_arch, 'r');
-            F.close();
+            F = open(dir_arch, 'r'); 
+            F.close(); 
             # Abro el archivo con seqIO para extraer secuencia
-            seq_fasta = self._leer_fasta_chr(dir_arch);
+            seq_fasta = self._leer_fasta_chr(dir_arch); 
 
             # Selecciono el rango y lo agrego a seq
-            seq = seq_fasta[pos_ini-1:pos_end].seq;
+            seq = seq_fasta[pos_ini-1:pos_end].seq; 
         except:
-            logging.warning('Archivo ' + nom_arch + ' no encontrado en la carpeta dada.');
+            logging.warning('Archivo ' + nom_arch + ' no encontrado en la carpeta dada.'); 
             # Si chr_n no esta presente, defino chr_id en base a chr_n para descargarlo
-            chr_id = self._buscar_chrid(chr_n);
+            chr_id = self._buscar_chrid(chr_n); 
             # Si no encuentro chr_id, tiro error
             if chr_id == '':
-                logging.error('Cromosoma ' + chr_n + ' no encontrado en lista de IDs para buscar en nucleotide.');
-                encontrado = False;
+                logging.error('Cromosoma ' + chr_n + ' no encontrado en lista de IDs para buscar en nucleotide.'); 
+                encontrado = False; 
             # Si encuentro chr_id, trato de bajarlo con self._download_chr()
             else:
-                encontrado = self._download_chr(chr_n);
+                encontrado = self._download_chr(chr_n); 
             # Si se pudo descargar el archivo, vuelvo a correr _consulta_secuencia_fasta()
             if encontrado:
-                seq = self._consulta_secuencia_fasta(chr_n, pos_ini, pos_end);
+                seq = self._consulta_secuencia_fasta(chr_n, pos_ini, pos_end); 
         return seq
 
 
@@ -401,18 +446,18 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         # Pensado para una secuencia, si hay mas de una tira error y devuelve la primera
 
         # Abro el archivo con SeqIO
-        arch_fasta = SeqIO.parse(dir_arch, 'fasta');
+        arch_fasta = SeqIO.parse(dir_arch, 'fasta'); 
         # Inicializo la variable que se devuelve
-        L_out = [];
+        L_out = []; 
         # Contador para revisar si hay mas de un registro
-        i = 0;
+        i = 0; 
         # Reviso si tiene mas de una secuencia
         for record in arch_fasta:
-            i = i + 1;
-            L_out.append(record);
+            i = i + 1; 
+            L_out.append(record); 
         if i != 1:
-            logging.warning('Mas de un registro en el .fasta, se devuelve el primero.')
-        L_out = L_out[0];
+            logging.warning('Mas de un registro en el .fasta, se devuelve el primero.'); 
+        L_out = L_out[0]; 
         return L_out
 
 
@@ -501,36 +546,54 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         return self
 
 
+    def _set_verbose(self, key, verbose):
+        # Define a fuerza bruta que funciones van como verbose
+        self.dict_verbose[key] = verbose;
+        return self
+
+
     def buscar_sitios_union_lista(self, L_sitios):
         # Crea y devuelve un elemento seq_data con las posiciones de todos los sitios de union en self.dict_rangos
         # Busca una lista de sitios de union posibles
+        # self._consulta_secuencia_fasta es el limitante en velocidad
 
+        # Defino verbose
+        verbose = self._check_verbose('buscar_sitios_union_lista'); 
         # Inicializo el elemento seq_data que se devuelve con los mismos valores de init que el que contiene los rangos
-        seq_out = self.clonar();
+        seq_out = self.clonar(); 
         # Recorro cada uno de los cromosomas en self.dict_rangos
         for key in self.dict_range.keys():
-            L_rangos = self.dict_range[key];
-            chr_n = key;
+            L_rangos = self.dict_range[key]; 
+            chr_n = key; 
+            # Display
+            if verbose:
+                print('\tInicializando revision de ' + str(chr_n))
+            cont_verbose = 0; 
+            len_verbose = int(len(L_rangos)/20); 
             # Recorro cada rango en L_rangos para chr_n
             for curr_rango in L_rangos:
                 # Defino pos_ini y pos_end para curr_rango
                 # No reviso la orientacion del rango porque devuelvo el sitio con orientacion incluida
-                curr_pos_ini = min(curr_rango[0], curr_rango[1]);
-                curr_pos_end = max(curr_rango[0], curr_rango[1]);
+                curr_pos_ini = min(curr_rango[0], curr_rango[1]); 
+                curr_pos_end = max(curr_rango[0], curr_rango[1]); 
                 # Busco la secuencia dada en el rango
-                seq_rango = self._consulta_secuencia_fasta(chr_n, curr_pos_ini, curr_pos_end);
+                seq_rango = self._consulta_secuencia_fasta(chr_n, curr_pos_ini, curr_pos_end); 
                 # Recorro cada sitio buscado en L_sitios
                 for sitio_buscado in L_sitios:
                     # Obtengo una lista de posiciones para los sitios de union encontrados
-                    L_SU = self._buscar_SU_en_seq(sitio_buscado, seq_rango, pos_ini_ref=curr_pos_ini-1);
+                    L_SU = self._buscar_SU_en_seq(sitio_buscado, seq_rango, pos_ini_ref=curr_pos_ini-1); 
                     # Por cada sitio encontrado, cargo un rango en seq_out
                     for sitio_encontrado in L_SU:
                         # Depende de como devuelvo el sitio en _buscar_SU_en_seq()
-                        seq_out.cargar_rango(chr_n, sitio_encontrado[0], sitio_encontrado[1], forward=sitio_encontrado[2]);
+                        seq_out.cargar_rango(chr_n, sitio_encontrado[0], sitio_encontrado[1], forward=sitio_encontrado[2]); 
+                # Display
+                cont_verbose += 1; 
+                if verbose and cont_verbose%len_verbose==0:
+                    print('Revisados ' + str(cont_verbose) + ' de ' + str(len(L_rangos)) + ' rangos.')
         return seq_out
 
 
-    def cargar_rango(self, chr_n, pos_ini, pos_end, forward=True):
+    def cargar_rango(self, chr_n, pos_ini, pos_end, forward=True, gen_cercano=''):
         # Carga un rango de secuencias en self.dict_range (y hace muchos chequeos)
         # No revisa si hay superposicion
         # Forward registra para histogramas en rangos de promotores
@@ -543,6 +606,9 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
             # Creo el rango revisando que sean int y pos_ini sea menor que pos_end
             rango_cargado = (min(int(pos_ini), int(pos_end)), max(int(pos_ini), int(pos_end)), forward);
             self.dict_range[chr_n].append(rango_cargado);
+            # Si gen_cercano contiene un elemento gen de Ensembl, lo cargo en genes_cercanos
+            if gen_cercano != '':
+                self._cargar_gen_cercano(gen_cercano, chr_n, rango_cargado[0], rango_cargado[1], forward);
         # Si no pude agregar chr_n, tiro error
         else:
             logging.error('Rango no agregado por no poder parsear "' + str(chr_n) + '"')
@@ -577,9 +643,8 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
                         pos_ini_SU = pos0-rango_promotor[1];
                         pos_end_SU = pos0-rango_promotor[0];
                     # Cargo las posiciones determinadas con self.cargar_rango()
-                    self.cargar_rango(chr_n, pos_ini_SU, pos_end_SU, forward=forward);
-                    # Cargo el gen en self.genes_cercanos
-                    self._cargar_gen_cercano(gene_object, chr_n, pos_ini_SU, pos_end_SU, forward);
+                    # Defino gen_cercano para que tambien se cargue el gen en self.genes_cercanos
+                    self.cargar_rango(chr_n, pos_ini_SU, pos_end_SU, forward=forward, gen_cercano=gene_object);
         return self
 
 
@@ -710,16 +775,30 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         # Inicializo la variable que se devuelve
         seq_out = self.clonar();
 
+        # Defino el diccionario propio y el comparado
+        dict_self = self.dict_range;
+        dict_comparado = seq_data_comparada.genes_cercanos;
         # Recorro los elementos de seq_data_comparada
-        for key in seq_data_comparada.dict_range.keys():
-            ### FALTA:
-            ## VER: Si puedo usar seq_data_comparada.genes_cercanos o self.genes_cercanos para que ande mejor
-            # Recorrer self.dict_range[key] y seq_data_comparada.dict_range[key] para ver si los rangos se solapan
-            # Solo registro rangos de seq_data_comparada que esten completamente dentro de rangos en self
-            # Rangos solapados se registran en seq_out
-            ###
-            pass
-        return self
+        for key in dict_comparado.keys():
+            # Solo uso las keys que esten en ambos diccionarios
+            if key in dict_self.keys():
+                # Defino la lista a recorrer
+                L_rangos_comparado = dict_comparado[key];
+                # Recorro cada uno de los rangos a comparar
+                for rango_comparado in L_rangos_comparado:
+                    # Selecciono el id del gen correspondiente al rango
+                    gen_rango = rango_comparado[0];
+                    # Recorro todos los rangos asociados a gen_rango
+                    for curr_rango in rango_comparado[1]:
+                        # Busco si curr_rango esta en los rangos de dict_self[key]
+                        rango_presente = self._buscar_rango_contenido(key, curr_rango[0], curr_rango[1]);
+                        # Si esta contenido, lo cargo en seq_out
+                        if rango_presente:
+                            seq_out.cargar_rango(key, curr_rango[0], curr_rango[1], forward=curr_rango[2], gen_cercano=gen_rango);
+            # Si alguna key no esta, devuelvo un warning
+            else:
+                logging.warning('Key ' + str(key) + ' no encontrada en dict_self.keys(). No se comparan esos datos.')
+        return seq_out
 
 
 
@@ -741,8 +820,34 @@ def _main_test():
     # Pruebo inicializar seq_data
     print('>Inicializando base_test.')
     base_test = seq_data('mm9', path_fasta=path_usado); # D:\\Archivos doctorado\\Genomas\\ 
-    print('>base_test inicializado. ')
+    #print('>base_test inicializado.')
 
+    print('>base_test inicializado. Buscando sitios de union con pipeline_promotores().')
+    rango_promotor = [-1500, 1500]; 
+    L_sitios = ['GGAAGTG']; 
+    base_test._set_verbose('buscar_sitios_union_lista', True); 
+    sitios_test = base_test.pipeline_promotores(rango_promotor, L_sitios=L_sitios); 
+    print('>Rangos de sitios de union encontrados. Inicializando bed_test para cargar rangos de .bed con pipeline_bed().')
+    L_bed = ['']; 
+    path_bed = ''; 
+    bed_test = base_test.pipeline_chipseq(L_bed,path_bed=path_bed); 
+    print('>bed_test inicializado sin busqueda de sitios de union. Probando superposicion_sitios().')
+    superposicion_test = bed_test.superposicion_sitios(sitios_test); 
+    print('>superposicion_test creado. Mostrando diccionarios.')
+    for key in superposicion_test.genes_cercanos.keys():
+        print(key)
+        print(superposicion_test[key])
+
+    #print('>base_test inicializado. Inicializando revision de sitios de union en el genoma.')
+    #base_test.cargar_promotores([-1500, 1500]);
+    #print('>Carga de promotores finalizada. Mostrando dict_range.')
+    #for key in base_test.dict_range.keys():
+    #    print(key)
+    #    print(base_test.dict_range[key])
+    #print('>Mostrando genes_cercanos.')
+    #for key in base_test.genes_cercanos.keys():
+    #    print(key)
+    #    print(base_test.genes_cercanos[key])
 
     #print('>base_test inicializado. Cargando rangos para probar busqueda de sitios de union.')
     #base_test.cargar_rango('chr1',10000100,10000200);
@@ -808,7 +913,7 @@ def _main_test():
     #print('>Rango cargado en chr2. Devolviendo dict_range en base_test.')
     #print(base_test.dict_range)
 
-    L_out = base_test.dict_range;
+    L_out = superposicion_test.genes_cercanos; 
     return L_out
 
 
