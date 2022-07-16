@@ -41,7 +41,7 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         # Creo diccionario para definir que funciones van en verbose
         self.dict_verbose = {}; 
         # Defino cantidad de avisos por verbose
-        self.verbose_n = 10; 
+        self.verbose_n = 4; 
         return None
 
 
@@ -571,7 +571,7 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
             if verbose:
                 print('>Iniciando revision de ' + str(chr_n) + '. Cantidad de rangos: ' + str(len(L_rangos)) + '.')
             cont_verbose = 0; 
-            len_verbose = int(len(L_rangos)/self.verbose_n); 
+            len_verbose = max(int(len(L_rangos)/self.verbose_n),1); 
             # Recorro cada rango en L_rangos para chr_n
             for curr_rango in L_rangos:
                 # Defino pos_ini y pos_end para curr_rango
@@ -824,16 +824,18 @@ def _main_test():
     base_test = seq_data('mm9', path_fasta=path_usado); # D:\\Archivos doctorado\\Genomas\\ 
     #print('>base_test inicializado.')
 
-    print('>base_test inicializado. Buscando sitios de union con pipeline_promotores().')
+    print('>base_test inicializado. Inicializando bed_test para cargar rangos de .bed con pipeline_chipseq().')
+    L_bed = ['Dupays2015']; 
+    path_bed = 'D:\\Dropbox\\Doctorado\\3-Genes transactivados rio abajo\\0-Fuentes\\Papers ChIP-seq\\'; 
+    print('Probando pipeline_chipseq() con "' + str(L_bed) + '" en "' + path_bed + '".')
+    bed_test = base_test.clonar(); 
+    bed_test.pipeline_chipseq(L_bed, path_bed=path_bed); 
+    print('>bed_test inicializado sin busqueda de sitios de union. Buscando sitios de union con pipeline_promotores().')
     rango_promotor = [-1500, 1500]; 
     L_sitios = ['GGAAGTG']; 
     base_test._set_verbose('buscar_sitios_union_lista', True); 
     sitios_test = base_test.pipeline_promotores(rango_promotor, L_sitios=L_sitios); 
-    print('>Rangos de sitios de union encontrados. Inicializando bed_test para cargar rangos de .bed con pipeline_bed().')
-    L_bed = ['']; 
-    path_bed = ''; 
-    bed_test = base_test.pipeline_chipseq(L_bed,path_bed=path_bed); 
-    print('>bed_test inicializado sin busqueda de sitios de union. Probando superposicion_sitios().')
+    print('>Rangos de sitios de union encontrados. Probando superposicion_sitios().')
     superposicion_test = bed_test.superposicion_sitios(sitios_test); 
     print('>superposicion_test creado. Mostrando diccionarios.')
     for key in superposicion_test.genes_cercanos.keys():
