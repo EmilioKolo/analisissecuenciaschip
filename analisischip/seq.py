@@ -831,16 +831,22 @@ def _main_test():
     bed_test = base_test.clonar(); 
     bed_test.pipeline_chipseq(L_bed, path_bed=path_bed); 
     print('>bed_test inicializado sin busqueda de sitios de union. Buscando sitios de union con pipeline_promotores().')
+    sitios_test = base_test.clonar(); 
     rango_promotor = [-1500, 1500]; 
-    L_sitios = ['GGAAGTG']; 
-    base_test._set_verbose('buscar_sitios_union_lista', True); 
-    sitios_test = base_test.pipeline_promotores(rango_promotor, L_sitios=L_sitios); 
+    L_sitios = ['AAGTG']; 
+    sitios_test._set_verbose('buscar_sitios_union_lista', True); 
+    sitios_test = sitios_test.pipeline_promotores(rango_promotor, L_sitios=L_sitios); 
     print('>Rangos de sitios de union encontrados. Probando superposicion_sitios().')
     superposicion_test = bed_test.superposicion_sitios(sitios_test); 
     print('>superposicion_test creado. Mostrando diccionarios.')
+    print('* dict_range')
+    for key in superposicion_test.dict_range.keys():
+        print(key)
+        print(superposicion_test.dict_range[key])
+    print('* genes_cercanos')
     for key in superposicion_test.genes_cercanos.keys():
         print(key)
-        print(superposicion_test[key])
+        print(superposicion_test.genes_cercanos[key])
 
     #print('>base_test inicializado. Inicializando revision de sitios de union en el genoma.')
     #base_test.cargar_promotores([-1500, 1500]);
