@@ -463,6 +463,53 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         return L_out
 
 
+    def _matriz_csv(self, guardar_genes=False):
+        # Devuelve una matriz en formato de tabla .csv para dict_range o genes_cercanos
+        # Cada fila se guarda en orden chr_n, pos_ini, pos_end, forward, gen_cercano
+
+        # Inicializo la matriz que se devuelve
+        M_out = []; 
+        # Si tengo que guardar genes_cercanos
+        if guardar_genes:
+            # Recorro las keys del diccionario
+            for key in self.genes_cercanos.keys():
+                # Reviso cada gen dentro de cada key en el diccionario
+                for L_curr_gene in self.genes_cercanos[key]:
+                    # Defino el gen y la lista de rangos en L_curr_gene
+                    L_range_curr_gene = L_curr_gene[1]; 
+                    curr_gene = L_curr_gene[0]; 
+                    # Recorro la lista de rangos
+                    for curr_range in L_range_curr_gene:
+                        # Inicializo la fila
+                        L_out = []; 
+                        # Agrego chr_n (key), pos_ini, pos_end, forward, gen_cercano
+                        L_out.append(str(key)); 
+                        L_out.append(curr_range[0]); 
+                        L_out.append(curr_range[1]); 
+                        L_out.append(curr_range[2]); 
+                        L_out.append(str(curr_gene)); 
+                        # Guardo L_out en M_out
+                        M_out.append(L_out[:]); 
+        # Si tengo que guardar dict_range
+        else:
+            # Recorro las keys del diccionario
+            for key in self.dict_range.keys():
+                # Recorro la lista de rangos de cada key en el diccionario
+                for curr_range in self.dict_range[key]:
+                    # Inicializo la fila
+                    L_out = []; 
+                    # Agrego chr_n (key), pos_ini, pos_end, forward
+                    L_out.append(str(key)); 
+                    L_out.append(curr_range[0]); 
+                    L_out.append(curr_range[1]); 
+                    L_out.append(curr_range[2]); 
+                    # gen_cercano es string vacio para self.dict_range
+                    L_out.append(''); 
+                    # Guardo L_out en M_out
+                    M_out.append(L_out[:]); 
+        return M_out
+
+
     def _obtener_chr(self, contig):
         # Recibe contig de un elemento gen de Entrez y define chr_n en base a eso
 
@@ -669,6 +716,26 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         return ret_seq
 
 
+    def guardar_rangos(self, nombre_out:str, ext='.csv', guardar_genes=False, path_out='.\\', sep=';'):
+        # Crea una tabla con los rangos registrados en self.dict_range o self.genes_cercanos
+        # Pensado para volver a cargarlo en otro objeto seq_data
+
+        # Creo una matriz M_csv en base a dict_range o genes_cercanos segun corresponda
+        M_csv = self._matriz_csv(guardar_genes=guardar_genes); 
+        # Creo el archivo nombre_out+ext en path_out
+        with open(str(path_out) + str(nombre_out) + str(ext), 'w') as F_out:
+            print('Archivo ' + str(nombre_out) + str(ext) + ' creado.')
+        # Vuelvo a abrir el archivo en modo append
+        with open(str(path_out) + str(nombre_out) + str(ext), 'a') as F_out:
+            # Recorro M_csv
+            for i in range(len(M_csv)):
+                # Transformo M_csv[i] en string separado por sep 
+                str_row = str(sep).join(map(str, M_csv[i])); 
+                # Guardo str_row en F_out
+                F_out.write(str_row + '\n'); 
+        return self
+
+
     def leer_bed(self, nom_bed, path_bed='.\\', col_chr=0, col_ini=1, col_end=2, sep='\t', ext='.bed'):
         # Carga todos los rangos en un archivo .bed con los outputs de ChIP-seq a self.dict_range
         # Usa cargar_rango() con los rangos obtenidos
@@ -774,32 +841,33 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
     def superposicion_sitios(self, seq_data_comparada):
         # Devuelvo elementos seq_out con rangos que solapan entre self y seq_data_comparada
 
+        # Defino verbose
+        verbose = self._check_verbose('superposicion_sitios'); 
         # Inicializo la variable que se devuelve
-        seq_out = self.clonar();
-
+        seq_out = self.clonar(); 
         # Defino el diccionario propio y el comparado
-        dict_self = self.dict_range;
-        dict_comparado = seq_data_comparada.genes_cercanos;
+        dict_self = self.dict_range; 
+        dict_comparado = seq_data_comparada.genes_cercanos; 
         # Recorro los elementos de seq_data_comparada
         for key in dict_comparado.keys():
             # Solo uso las keys que esten en ambos diccionarios
             if key in dict_self.keys():
                 # Defino la lista a recorrer
-                L_rangos_comparado = dict_comparado[key];
+                L_rangos_comparado = dict_comparado[key]; 
                 # Recorro cada uno de los rangos a comparar
                 for rango_comparado in L_rangos_comparado:
                     # Selecciono el id del gen correspondiente al rango
-                    gen_rango = rango_comparado[0];
+                    gen_rango = rango_comparado[0]; 
                     # Recorro todos los rangos asociados a gen_rango
                     for curr_rango in rango_comparado[1]:
                         # Busco si curr_rango esta en los rangos de dict_self[key]
-                        rango_presente = self._buscar_rango_contenido(key, curr_rango[0], curr_rango[1]);
+                        rango_presente = self._buscar_rango_contenido(key, curr_rango[0], curr_rango[1]); 
                         # Si esta contenido, lo cargo en seq_out
                         if rango_presente:
-                            seq_out.cargar_rango(key, curr_rango[0], curr_rango[1], forward=curr_rango[2], gen_cercano=gen_rango);
+                            seq_out.cargar_rango(key, curr_rango[0], curr_rango[1], forward=curr_rango[2], gen_cercano=gen_rango); 
             # Si alguna key no esta, devuelvo un warning
             else:
-                logging.warning('Key ' + str(key) + ' no encontrada en dict_self.keys(). No se comparan esos datos.')
+                logging.warning('Key ' + str(key) + ' no encontrada en dict_self.keys(). No se comparan esos datos.'); 
         return seq_out
 
 
@@ -811,14 +879,16 @@ def _main_test():
     # Funcion para probar funciones en ejecucion del archivo
 
     # Inicializo la variable que se devuelve
-    L_out = [];
+    L_out = []; 
     
     # Paso datos de usuario a Entrez
-    Entrez.email = 'ekolomenski@gmail.com';
-    Entrez.api_key = '9bccbd4949f226a5930868df36c211e8b408';
+    Entrez.email = 'ekolomenski@gmail.com'; 
+    Entrez.api_key = '9bccbd4949f226a5930868df36c211e8b408'; 
 
     # Defino la direccion del .fasta
-    path_usado = 'D:\\Archivos doctorado\\Genomas\\';
+    path_usado = 'D:\\Archivos doctorado\\Genomas\\'; 
+    # Defino la direccion del output
+    path_out = 'D:\\Archivos doctorado\\Output_dump\\'; 
     # Pruebo inicializar seq_data
     print('>Inicializando base_test.')
     base_test = seq_data('mm9', path_fasta=path_usado); # D:\\Archivos doctorado\\Genomas\\ 
@@ -830,26 +900,37 @@ def _main_test():
     print('Probando pipeline_chipseq() con "' + str(L_bed) + '" en "' + path_bed + '".')
     bed_test = base_test.clonar(); 
     bed_test.pipeline_chipseq(L_bed, path_bed=path_bed); 
+    print('* bed_test.dict_range, primeros 5 rangos por key')
+    for key in bed_test.dict_range.keys():
+        print(key)
+        print(bed_test.dict_range[key][:5])
+    print('* Guardando bed_test en ' + str(path_out))
+    bed_test.guardar_rangos('bed_test', path_out=path_out); 
     print('>bed_test inicializado sin busqueda de sitios de union. Buscando sitios de union con pipeline_promotores().')
     sitios_test = base_test.clonar(); 
     rango_promotor = [-1500, 1500]; 
     L_sitios = ['AAGTG']; 
     sitios_test._set_verbose('buscar_sitios_union_lista', True); 
     sitios_test = sitios_test.pipeline_promotores(rango_promotor, L_sitios=L_sitios); 
+    print('* Guardando sitios_test en ' + str(path_out))
+    sitios_test.guardar_rangos('sitios_test', guardar_genes=True, path_out=path_out); 
     print('>Rangos de sitios de union encontrados. Probando superposicion_sitios().')
     superposicion_test = bed_test.superposicion_sitios(sitios_test); 
     print('>superposicion_test creado. Mostrando diccionarios.')
-    print('* dict_range')
+    print('* dict_range, primeros 5 rangos por key')
     for key in superposicion_test.dict_range.keys():
         print(key)
-        print(superposicion_test.dict_range[key])
-    print('* genes_cercanos')
+        print(superposicion_test.dict_range[key][:5])
+    print('* genes_cercanos, primeros 5 rangos por key')
     for key in superposicion_test.genes_cercanos.keys():
         print(key)
-        print(superposicion_test.genes_cercanos[key])
+        print(superposicion_test.genes_cercanos[key][:5])
+    print('* Guardando superposicion_test en ' + str(path_out))
+    sitios_test.guardar_rangos('superposicion_test_range', guardar_genes=False, path_out=path_out); 
+    sitios_test.guardar_rangos('superposicion_test_genes', guardar_genes=True, path_out=path_out); 
 
     #print('>base_test inicializado. Inicializando revision de sitios de union en el genoma.')
-    #base_test.cargar_promotores([-1500, 1500]);
+    #base_test.cargar_promotores([-1500, 1500]); 
     #print('>Carga de promotores finalizada. Mostrando dict_range.')
     #for key in base_test.dict_range.keys():
     #    print(key)
@@ -860,15 +941,15 @@ def _main_test():
     #    print(base_test.genes_cercanos[key])
 
     #print('>base_test inicializado. Cargando rangos para probar busqueda de sitios de union.')
-    #base_test.cargar_rango('chr1',10000100,10000200);
-    #base_test.cargar_rango('chr1',10200100,10200200);
-    #base_test.cargar_rango('chr1',10001000,10002000);
+    #base_test.cargar_rango('chr1',10000100,10000200); 
+    #base_test.cargar_rango('chr1',10200100,10200200); 
+    #base_test.cargar_rango('chr1',10001000,10002000); 
     #print('>Rangos cargados. Buscando sitios de union.')
     #for i in base_test.dict_range['chr1']:
     #    print(i)
     #    print(base_test._consulta_secuencia_fasta('chr1',i[0],i[1]))
     #L_sitios = ['AAGTG'];
-    #sitios_test = base_test.buscar_sitios_union_lista(L_sitios);
+    #sitios_test = base_test.buscar_sitios_union_lista(L_sitios); 
     #print('>Rangos de sitios de union encontrados.')
     #print(sitios_test.dict_range)
     #for i in sitios_test.dict_range['chr1']:
