@@ -664,6 +664,17 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         return self
 
 
+    def cargar_rangos_archivo(self, nombre_in:str, ext='.csv', cargar_genes=False, path_in='.\\', sep=';'):
+        # 
+
+        ### FALTA:
+        # Abrir archivo
+        # Leer filas
+        # Cargar rangos
+        ###
+        return self
+
+
     def cargar_promotores(self, rango_promotor, genome_version='', organism=''):
         # Carga todos los rangos del genoma a self.dict_range
         # Registra entre rango_promotor[0] y rango_promotor[1] a partir del +1 de cada gen
@@ -716,7 +727,7 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         return ret_seq
 
 
-    def guardar_rangos(self, nombre_out:str, ext='.csv', guardar_genes=False, path_out='.\\', sep=';'):
+    def guardar_rangos_archivo(self, nombre_out:str, ext='.csv', guardar_genes=False, path_out='.\\', sep=';'):
         # Crea una tabla con los rangos registrados en self.dict_range o self.genes_cercanos
         # Pensado para volver a cargarlo en otro objeto seq_data
 
@@ -843,6 +854,9 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
 
         # Defino verbose
         verbose = self._check_verbose('superposicion_sitios'); 
+        ### FALTA:
+        # Hacer display
+        ###
         # Inicializo la variable que se devuelve
         seq_out = self.clonar(); 
         # Defino el diccionario propio y el comparado
@@ -905,7 +919,7 @@ def _main_test():
         print(key)
         print(bed_test.dict_range[key][:5])
     print('* Guardando bed_test en ' + str(path_out))
-    bed_test.guardar_rangos('bed_test', path_out=path_out); 
+    bed_test.guardar_rangos_archivo('bed_test', path_out=path_out); 
     print('>bed_test inicializado sin busqueda de sitios de union. Buscando sitios de union con pipeline_promotores().')
     sitios_test = base_test.clonar(); 
     rango_promotor = [-1500, 1500]; 
@@ -913,7 +927,7 @@ def _main_test():
     sitios_test._set_verbose('buscar_sitios_union_lista', True); 
     sitios_test = sitios_test.pipeline_promotores(rango_promotor, L_sitios=L_sitios); 
     print('* Guardando sitios_test en ' + str(path_out))
-    sitios_test.guardar_rangos('sitios_test', guardar_genes=True, path_out=path_out); 
+    sitios_test.guardar_rangos_archivo('sitios_test', guardar_genes=True, path_out=path_out); 
     print('>Rangos de sitios de union encontrados. Probando superposicion_sitios().')
     superposicion_test = bed_test.superposicion_sitios(sitios_test); 
     print('>superposicion_test creado. Mostrando diccionarios.')
@@ -926,8 +940,8 @@ def _main_test():
         print(key)
         print(superposicion_test.genes_cercanos[key][:5])
     print('* Guardando superposicion_test en ' + str(path_out))
-    sitios_test.guardar_rangos('superposicion_test_range', guardar_genes=False, path_out=path_out); 
-    sitios_test.guardar_rangos('superposicion_test_genes', guardar_genes=True, path_out=path_out); 
+    sitios_test.guardar_rangos_archivo('superposicion_test_range', guardar_genes=False, path_out=path_out); 
+    sitios_test.guardar_rangos_archivo('superposicion_test_genes', guardar_genes=True, path_out=path_out); 
 
     #print('>base_test inicializado. Inicializando revision de sitios de union en el genoma.')
     #base_test.cargar_promotores([-1500, 1500]); 
