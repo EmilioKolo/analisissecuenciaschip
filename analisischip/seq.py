@@ -707,13 +707,52 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
 
 
     def cargar_rangos_archivo(self, nombre_in:str, ext='.csv', cargar_genes=False, path_in='.\\', sep=';'):
-        # 
+        # Abre el archivo nombre_in en carpeta path_in
 
-        ### FALTA:
-        # Abrir archivo
-        # Leer filas
-        # Cargar rangos
-        ###
+        # Uso try en caso que este mal escrito nombre_in, path_in o que algo no funcione
+        try:
+            # Abro el archivo
+            with open(path_in + nombre_in + ext, 'r') as F_in:
+                print('Archivo ' + nombre_in + ext + ' abierto.')
+                # Recorro cada una de las filas de F_in
+                for curr_line in F_in.readlines():
+                    L = curr_line.rstrip().split(sep); 
+                    # Primero reviso que L tenga 4 elementos o mas
+                    if len(L) < 4:
+                        logging.warning('Fila muy corta: ' + str(L)); 
+                    # Si cargar_genes es True, reviso que L sea de largo 5
+                    elif cargar_genes:
+                        # Si L es de largo 4, el gen es string vacio
+                        if len(L) == 4:
+                            logging.warning('Fila sin gen: ' + str(L)); 
+                            gen = ''; 
+                        else:
+                            gen = L[4]; 
+                        # Paso forward de 'True'/'False' a booleanos
+                        if L[3] == 'True':
+                            forward = True; 
+                        elif L[3] == 'False':
+                            forward = False; 
+                        else:
+                            logging.warning('Fila sin forward: ' + str(L) + '. Se usa True.'); 
+                            forward = True; 
+                        # Cargo el resto de la info con self.cargar_rango()
+                        self.cargar_rango(L[0], int(L[1]), int(L[2]), forward=forward, gen_cercano=gen); 
+                    # Si cargar_genes es False, directamente cargo los datos
+                    else:
+                        # Paso forward de 'True'/'False' a booleanos
+                        if L[3] == 'True':
+                            forward = True; 
+                        elif L[3] == 'False':
+                            forward = False; 
+                        else:
+                            logging.warning('Fila sin forward: ' + str(L) + '. Se usa True.'); 
+                            forward = True; 
+                        # Cargo el resto de la info con self.cargar_rango()
+                        self.cargar_rango(L[0], int(L[1]), int(L[2]), forward=forward); 
+        # En caso que no se pueda abrir, tiro error
+        except:
+            logging.error('No se pudo abrir el archivo ' + nombre_in + ext + ' en carpeta ' + path_in)
         return self
 
 
@@ -954,35 +993,14 @@ def _main_test():
     base_test = seq_data('mm9', path_fasta=path_usado); # D:\\Archivos doctorado\\Genomas\\ 
     #print('>base_test inicializado.')
 
-    ### FALTA:
-    # Cargar bed_test del .csv
-    # Ver como se guarda en .csv el diccionario de genes_cercanos
-    ###
-    print('>base_test inicializado. Inicializando bed_test para cargar rangos de .bed con pipeline_chipseq().')
-    L_bed = ['Dupays2015']; 
-    path_bed = 'D:\\Dropbox\\Doctorado\\3-Genes transactivados rio abajo\\0-Fuentes\\Papers ChIP-seq\\'; 
-    print('Probando pipeline_chipseq() con "' + str(L_bed) + '" en "' + path_bed + '".')
+
+    print('>base_test inicializado. Cargando bed_test y sitios_test de archivos guardados.')
     bed_test = base_test.clonar(); 
-    bed_test.pipeline_chipseq(L_bed, path_bed=path_bed); 
-    #print('* bed_test.dict_range, primeros 5 rangos por key')
-    #for key in bed_test.dict_range.keys():
-    #    print(key)
-    #    print(bed_test.dict_range[key][:5])
-    print('* Guardando bed_test en ' + str(path_out))
-    bed_test.guardar_rangos_archivo('bed_test', path_out=path_out); 
-    print('>bed_test inicializado. Buscando sitios de union en sitios_test con pipeline_promotores().')
+    bed_test.cargar_rangos_archivo('bed_test', path_in=path_out); 
     sitios_test = base_test.clonar(); 
-    rango_promotor = [-1500, 1500]; 
-    L_sitios = ['AAGTG']; 
-    sitios_test._set_verbose('buscar_sitios_union_lista', True); 
-    sitios_test.pipeline_promotores(rango_promotor, L_sitios=L_sitios); 
-    print('* genes_cercanos, primeros 5 rangos por key')
-    for key in sitios_test.genes_cercanos.keys():
-        print(key)
-        print(sitios_test.genes_cercanos[key][:5])
-    print('* Guardando sitios_test en ' + str(path_out))
-    sitios_test.guardar_rangos_archivo('sitios_test', guardar_genes=True, path_out=path_out); 
-    print('>Rangos de sitios de union encontrados. Probando superposicion_sitios().')
+    sitios_test.cargar_rangos_archivo('sitios_test', cargar_genes=True, path_in=path_out); 
+    print('bed_test y sitios_test cargados. Probando superposicion_sitios().')
+    bed_test._set_verbose('superposicion_sitios', True); 
     superposicion_test = bed_test.superposicion_sitios(sitios_test); 
     print('>superposicion_test creado. Mostrando diccionarios.')
     print('* dict_range, primeros 5 rangos por key')
@@ -993,9 +1011,45 @@ def _main_test():
     for key in superposicion_test.genes_cercanos.keys():
         print(key)
         print(superposicion_test.genes_cercanos[key][:5])
-    print('* Guardando superposicion_test en ' + str(path_out))
-    sitios_test.guardar_rangos_archivo('superposicion_test_range', guardar_genes=False, path_out=path_out); 
-    sitios_test.guardar_rangos_archivo('superposicion_test_genes', guardar_genes=True, path_out=path_out); 
+
+    #print('>base_test inicializado. Inicializando bed_test para cargar rangos de .bed con pipeline_chipseq().')
+    #L_bed = ['Dupays2015']; 
+    #path_bed = 'D:\\Dropbox\\Doctorado\\3-Genes transactivados rio abajo\\0-Fuentes\\Papers ChIP-seq\\'; 
+    #print('Probando pipeline_chipseq() con "' + str(L_bed) + '" en "' + path_bed + '".')
+    #bed_test = base_test.clonar(); 
+    #bed_test.pipeline_chipseq(L_bed, path_bed=path_bed); 
+    #print('* bed_test.dict_range, primeros 5 rangos por key')
+    #for key in bed_test.dict_range.keys():
+    #    print(key)
+    #    print(bed_test.dict_range[key][:5])
+    #print('* Guardando bed_test en ' + str(path_out))
+    #bed_test.guardar_rangos_archivo('bed_test', path_out=path_out); 
+    #print('>bed_test inicializado. Buscando sitios de union en sitios_test con pipeline_promotores().')
+    #sitios_test = base_test.clonar(); 
+    #rango_promotor = [-1500, 1500]; 
+    #L_sitios = ['AAGTG']; 
+    #sitios_test._set_verbose('buscar_sitios_union_lista', True); 
+    #sitios_test.pipeline_promotores(rango_promotor, L_sitios=L_sitios); 
+    #print('* genes_cercanos, primeros 5 rangos por key')
+    #for key in sitios_test.genes_cercanos.keys():
+    #    print(key)
+    #    print(sitios_test.genes_cercanos[key][:5])
+    #print('* Guardando sitios_test en ' + str(path_out))
+    #sitios_test.guardar_rangos_archivo('sitios_test', guardar_genes=True, path_out=path_out); 
+    #print('>Rangos de sitios de union encontrados. Probando superposicion_sitios().')
+    #superposicion_test = bed_test.superposicion_sitios(sitios_test); 
+    #print('>superposicion_test creado. Mostrando diccionarios.')
+    #print('* dict_range, primeros 5 rangos por key')
+    #for key in superposicion_test.dict_range.keys():
+    #    print(key)
+    #    print(superposicion_test.dict_range[key][:5])
+    #print('* genes_cercanos, primeros 5 rangos por key')
+    #for key in superposicion_test.genes_cercanos.keys():
+    #    print(key)
+    #    print(superposicion_test.genes_cercanos[key][:5])
+    #print('* Guardando superposicion_test en ' + str(path_out))
+    #superposicion_test.guardar_rangos_archivo('superposicion_test_range', guardar_genes=False, path_out=path_out); 
+    #superposicion_test.guardar_rangos_archivo('superposicion_test_genes', guardar_genes=True, path_out=path_out); 
 
     #print('>base_test inicializado. Inicializando revision de sitios de union en el genoma.')
     #base_test.cargar_promotores([-1500, 1500]); 
@@ -1072,7 +1126,7 @@ def _main_test():
     #print('>Rango cargado en chr2. Devolviendo dict_range en base_test.')
     #print(base_test.dict_range)
 
-    L_out = superposicion_test.genes_cercanos; 
+    #L_out = bed_test; 
     return L_out
 
 
