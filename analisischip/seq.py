@@ -43,6 +43,7 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         # Defino cantidad de avisos por verbose
         self.verbose_n = 4; 
         self.verbose_cont = 0; 
+        self.verbose_len = 1000; 
         return None
 
 
@@ -80,24 +81,32 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         # Busca si un rango dado se encuentra contenido entre los rangos de self.dict_range
         # Devuelve True si lo encuentra y False si no
 
+        # Defino verbose
+        verbose = self._check_verbose('_buscar_rango_contenido'); 
+        if verbose: 
+            if self.verbose_cont%self.verbose_len == 0:
+                print('Iniciando revision de rango ' + str(pos_ini) + ', ' + str(pos_end))
+            self.verbose_cont = self.verbose_cont + 1; 
         # Inicializo la variable que se devuelve como False
-        rango_encontrado = False;
+        rango_encontrado = False; 
         # Por las dudas veo si chr_n esta entre self.dict_range.keys()
         if chr_n in self.dict_range.keys():
             # Inicializo las variables de ciclo while
-            i = 0;
+            i = 0; 
             # Recorro self.dict_range[chr_n]
-            while not(rango_encontrado) and i < len(self.dict_range[chr_n]):
+            while not(rango_encontrado) and (i < len(self.dict_range[chr_n])):
                 # Defino el rango actual
-                range_self = self.dict_range[chr_n][i];
+                range_self = self.dict_range[chr_n][i]; 
                 # Reviso si range_self contiene pos_ini y pos_end
-                if range_self[0] < pos_ini and range_self[1] > pos_end:
-                    rango_encontrado = True;
+                if (range_self[0] < pos_ini) and (range_self[1] > pos_end):
+                    rango_encontrado = True; 
+                    if verbose and self.verbose_cont%self.verbose_len == 0:
+                        print('Rango encontrado dentro de rango ' + str(range_self[0]) + ', ' + str(range_self[1]))
                 else:
-                    i += 1;
+                    i += 1; 
         # Si no encuentra la key tiro warning
         else:
-            logging.warning('No se encontro la key ' + str(chr_n) + ' en self.dict_range')
+            logging.warning('No se encontro la key ' + str(chr_n) + ' en self.dict_range'); 
         return rango_encontrado
 
 
@@ -607,7 +616,7 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
 
     def buscar_sitios_union_lista(self, L_sitios, genes_cercanos=False):
         # Crea y devuelve un elemento seq_data con las posiciones de todos los sitios de union en self.dict_rangos
-        # Si guardar_genes es True, busca los sitios de union en self.genes_cercanos
+        # Si genes_cercanos es True, busca los sitios de union en self.genes_cercanos
         # Busca una lista de sitios de union posibles
         # self._consulta_secuencia_fasta es el limitante en velocidad
 
@@ -617,8 +626,10 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         seq_out = self.clonar(); 
         # Chequeo si tengo que usar self.dict_range o self.genes_cercanos
         if genes_cercanos:
+            # Creo L_keys para ordenar las keys alfabeticamente
+            L_keys = sorted(self.genes_cercanos.keys(), key=str.lower); 
             # Recorro cada uno de los cromosomas en self.genes_cercanos
-            for key in self.genes_cercanos.keys():
+            for key in L_keys:
                 L_genes = self.genes_cercanos[key]; 
                 chr_n = key; 
                 # Display
@@ -652,8 +663,10 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
                         if verbose and cont_verbose%len_verbose==0:
                             print('Revisados ' + str(cont_verbose) + ' de ' + str(len(L_genes)) + ' rangos.')
         else:
+            # Creo L_keys para ordenar las keys alfabeticamente
+            L_keys = sorted(self.dict_range.keys(), key=str.lower); 
             # Recorro cada uno de los cromosomas en self.dict_rangos
-            for key in self.dict_range.keys():
+            for key in L_keys:
                 L_rangos = self.dict_range[key]; 
                 chr_n = key; 
                 # Display
@@ -939,9 +952,6 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
 
         # Defino verbose
         verbose = self._check_verbose('superposicion_sitios'); 
-        ### FALTA:
-        # Hacer display
-        ###
         # Inicializo la variable que se devuelve
         seq_out = self.clonar(); 
         # Defino el diccionario propio y el comparado
@@ -949,6 +959,9 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         dict_comparado = seq_data_comparada.genes_cercanos; 
         # Recorro los elementos de seq_data_comparada
         for key in dict_comparado.keys():
+            # Display
+            if verbose:
+                print('Iniciando revision de ' + str(key))
             # Solo uso las keys que esten en ambos diccionarios
             if key in dict_self.keys():
                 # Defino la lista a recorrer
@@ -994,13 +1007,21 @@ def _main_test():
     #print('>base_test inicializado.')
 
 
-    print('>base_test inicializado. Cargando bed_test y sitios_test de archivos guardados.')
+    print('>base_test inicializado. Cargando bed_test y promotores_test de archivos guardados.')
     bed_test = base_test.clonar(); 
     bed_test.cargar_rangos_archivo('bed_test', path_in=path_out); 
+    promotores_test = base_test.clonar(); 
+    promotores_test.cargar_rangos_archivo('promotores_test', cargar_genes=True, path_in=path_out); 
+    print('>bed_test y promotores_test cargados. Creando sitios_test.')
+    L_sitios = ['AAGTG']; 
     sitios_test = base_test.clonar(); 
-    sitios_test.cargar_rangos_archivo('sitios_test', cargar_genes=True, path_in=path_out); 
-    print('bed_test y sitios_test cargados. Probando superposicion_sitios().')
+    promotores_test._set_verbose('buscar_sitios_union_lista', True); 
+    sitios_test = promotores_test.buscar_sitios_union_lista(L_sitios, genes_cercanos=True); 
+    print('>sitios_test creado. Guardando en ' + str(path_out))
+    sitios_test.guardar_rangos_archivo('sitios_test', guardar_genes=True, path_out=path_out); 
+    print('>sitios_test guardado. Probando superposicion_sitios().')
     bed_test._set_verbose('superposicion_sitios', True); 
+    bed_test._set_verbose('_buscar_rango_contenido', True); 
     superposicion_test = bed_test.superposicion_sitios(sitios_test); 
     print('>superposicion_test creado. Mostrando diccionarios.')
     print('* dict_range, primeros 5 rangos por key')
