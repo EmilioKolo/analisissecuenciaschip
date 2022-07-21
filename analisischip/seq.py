@@ -19,10 +19,9 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
 
 
     def __init__(self, genome_name, genome_element='', path_fasta=''):
-        # M_seq almacena todos los rangos de secuencias
         # Rangos almacenados en formato chr_n, pos_ini, pos_end
-        # Secuencia almacenada en archivos en path a definir
-        # Genome element sirve para acelerar cosas pero es necesario si no se corre cargar_promotores_genoma()
+        # Secuencia almacenada en archivos en path_fasta
+        # genome_element sirve para acelerar cosas pero es necesario si no se corre cargar_promotores_genoma()
 
         # dict_range registra los rangos por chr_n
         # Formato: {chr_n:[(pos_ini, pos_end, forward),],}
@@ -982,6 +981,64 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
                 logging.warning('Key ' + str(key) + ' no encontrada en dict_self.keys(). No se comparan esos datos.'); 
         return seq_out
 
+
+
+class seq_handler(object):
+    '''
+Clase que crea y maneja objetos seq_data para correr los distintos pipelines
+Funciones para hacer:
+# Sitios de union en peaks de ChIP-seq con genes cerca
+    # Calculo de distancia de los sitios de union a los genes
+    # Histogramas de distancias
+# Peaks de ChIP-seq sin sitios de union, peaks de ChIP-seq con sitios de union sin genes cerca
+    # Diagrama de Venn con peaks de ChIP-seq vs sitios de union cerca de genes
+    '''
+
+    def __init__(self, genome_name, path_fasta='', path_archivos=''):
+        # Cargo los datos necesarios para inicializar seq_data
+        self.genome_name = genome_name; 
+        self.path_fasta = path_fasta; 
+        # path_archivos registra la carpeta donde se guardan y cargan los archivos seq_data
+        self.path_archivos = path_archivos; 
+        # Lista de objetos seq_data usados por el handler
+        self.L_seq = []; 
+        return None
+
+
+    def _agregar_seq_data(self, nom_arch='', path_arch=''):
+        # Inicializa un objeto seq_data y lo agrega a self.L_seq
+        # Si nom_arch es distinto de string vacio, se cargan de ahi los rangos
+        # Si path_arch es string vacio, se usa self.path_archivos
+
+        ### FALTA:
+        # Revisar si nom_arch y/o path_arch son string vacios
+        # Usar funcion para cargar archivos de seq_data
+        # Agregar variables que falten
+        ###
+
+        # Inicializo el objeto seq_data con los datos dados en init
+        new_seq = seq_data(self.genome_name, path_fasta=self.path_fasta); 
+        # Cargo new_seq en self.L_seq
+        self.L_seq.append(new_seq); 
+        return self
+
+
+    def agregar_chipseq_peaks(self, bed_arch, bed_path=''):
+        # 
+
+        ### FALTA:
+        # Usar _agregar_seq_data() con bed_arch
+        ###
+        return self
+
+
+    def agregar_promotores_rango(self, rango_usado, promotores_arch='', promotores_path='', sitios_union=False, L_sitios=[]):
+        # 
+
+        ### FALTA:
+        # Usar _agregar_seq_data() con promotores_arch 
+        ###
+        return self
 
 
 #################################### FUNCIONES ####################################
