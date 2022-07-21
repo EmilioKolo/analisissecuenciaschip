@@ -43,7 +43,7 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         # Defino cantidad de avisos por verbose
         self.verbose_n = 4; 
         self.verbose_cont = 0; 
-        self.verbose_len = 1000; 
+        self.verbose_len = 10000; 
         return None
 
 
@@ -1007,33 +1007,38 @@ def _main_test():
     #print('>base_test inicializado.')
 
 
-    print('>base_test inicializado. Cargando bed_test y promotores_test de archivos guardados.')
+    '''print('>base_test inicializado. Cargando bed_test y sitios_test de archivos guardados.')
     bed_test = base_test.clonar(); 
     bed_test.cargar_rangos_archivo('bed_test', path_in=path_out); 
-    promotores_test = base_test.clonar(); 
-    promotores_test.cargar_rangos_archivo('promotores_test', cargar_genes=True, path_in=path_out); 
-    print('>bed_test y promotores_test cargados. Creando sitios_test.')
-    L_sitios = ['AAGTG']; 
     sitios_test = base_test.clonar(); 
-    promotores_test._set_verbose('buscar_sitios_union_lista', True); 
-    sitios_test = promotores_test.buscar_sitios_union_lista(L_sitios, genes_cercanos=True); 
-    print('>sitios_test creado. Guardando en ' + str(path_out))
-    sitios_test.guardar_rangos_archivo('sitios_test', guardar_genes=True, path_out=path_out); 
-    print('>sitios_test guardado. Probando superposicion_sitios().')
+    sitios_test.cargar_rangos_archivo('sitios_test', cargar_genes=True, path_in=path_out);
+    print('>bed_test y sitios_test cargados. Probando superposicion_sitios().')
+    #promotores_test = base_test.clonar(); 
+    #promotores_test.cargar_rangos_archivo('promotores_test', cargar_genes=True, path_in=path_out); 
+    #L_sitios = ['AAGTG']; 
+    #sitios_test = base_test.clonar(); 
+    #promotores_test._set_verbose('buscar_sitios_union_lista', True); 
+    #sitios_test = promotores_test.buscar_sitios_union_lista(L_sitios, genes_cercanos=True); 
+    #print('>sitios_test creado. Guardando en ' + str(path_out))
+    #sitios_test.guardar_rangos_archivo('sitios_test', guardar_genes=True, path_out=path_out); 
+    #print('>sitios_test guardado. Probando superposicion_sitios().')
     bed_test._set_verbose('superposicion_sitios', True); 
     bed_test._set_verbose('_buscar_rango_contenido', True); 
     superposicion_test = bed_test.superposicion_sitios(sitios_test); 
     print('>superposicion_test creado. Mostrando diccionarios.')
-    print('* dict_range, primeros 5 rangos por key')
+    print('* dict_range, primeros 3 rangos por key')
     for key in superposicion_test.dict_range.keys():
-        print(key)
-        print(superposicion_test.dict_range[key][:5])
-    print('* genes_cercanos, primeros 5 rangos por key')
+        print(str(key) + '; largo: ' + str(len(superposicion_test.dict_range[key])))
+        print(superposicion_test.dict_range[key][:3])
+    print('* genes_cercanos, primeros 3 rangos por key')
     for key in superposicion_test.genes_cercanos.keys():
-        print(key)
-        print(superposicion_test.genes_cercanos[key][:5])
+        print(str(key) + '; largo: ' + str(len(superposicion_test.genes_cercanos[key])))
+        print(superposicion_test.genes_cercanos[key][:3])
+    superposicion_test.guardar_rangos_archivo('superposicion_test_range', guardar_genes=False, path_out=path_out); 
+    superposicion_test.guardar_rangos_archivo('superposicion_test_genes', guardar_genes=True, path_out=path_out); 
+    print('>superposicion_test guardado en archivos.')'''
 
-    #print('>base_test inicializado. Inicializando bed_test para cargar rangos de .bed con pipeline_chipseq().')
+    '''#print('>base_test inicializado. Inicializando bed_test para cargar rangos de .bed con pipeline_chipseq().')
     #L_bed = ['Dupays2015']; 
     #path_bed = 'D:\\Dropbox\\Doctorado\\3-Genes transactivados rio abajo\\0-Fuentes\\Papers ChIP-seq\\'; 
     #print('Probando pipeline_chipseq() con "' + str(L_bed) + '" en "' + path_bed + '".')
@@ -1070,9 +1075,9 @@ def _main_test():
     #    print(superposicion_test.genes_cercanos[key][:5])
     #print('* Guardando superposicion_test en ' + str(path_out))
     #superposicion_test.guardar_rangos_archivo('superposicion_test_range', guardar_genes=False, path_out=path_out); 
-    #superposicion_test.guardar_rangos_archivo('superposicion_test_genes', guardar_genes=True, path_out=path_out); 
+    #superposicion_test.guardar_rangos_archivo('superposicion_test_genes', guardar_genes=True, path_out=path_out); '''
 
-    #print('>base_test inicializado. Inicializando revision de sitios de union en el genoma.')
+    '''#print('>base_test inicializado. Inicializando revision de sitios de union en el genoma.')
     #base_test.cargar_promotores([-1500, 1500]); 
     #print('>Carga de promotores finalizada. Mostrando dict_range.')
     #for key in base_test.dict_range.keys():
@@ -1081,9 +1086,9 @@ def _main_test():
     #print('>Mostrando genes_cercanos.')
     #for key in base_test.genes_cercanos.keys():
     #    print(key)
-    #    print(base_test.genes_cercanos[key])
+    #    print(base_test.genes_cercanos[key])'''
 
-    #print('>base_test inicializado. Cargando rangos para probar busqueda de sitios de union.')
+    '''#print('>base_test inicializado. Cargando rangos para probar busqueda de sitios de union.')
     #base_test.cargar_rango('chr1',10000100,10000200); 
     #base_test.cargar_rango('chr1',10200100,10200200); 
     #base_test.cargar_rango('chr1',10001000,10002000); 
@@ -1097,9 +1102,9 @@ def _main_test():
     #print(sitios_test.dict_range)
     #for i in sitios_test.dict_range['chr1']:
     #    print(i)
-    #    print(sitios_test._consulta_secuencia_fasta('chr1',i[0],i[1]))
+    #    print(sitios_test._consulta_secuencia_fasta('chr1',i[0],i[1]))'''
 
-    #print('>base_test inicializado. Probando busqueda de seq en seq.')
+    '''#print('>base_test inicializado. Probando busqueda de seq en seq.')
     #seq_ref = 'ATATTACGATCGT';
     #seq_busq = 'TCGT';
     #L_SU = base_test._buscar_SU_en_seq(seq_busq, seq_ref);
@@ -1109,9 +1114,9 @@ def _main_test():
     #print(seq_busq)
     #print('Posiciones encontradas:')
     #for SU in L_SU:
-    #    print(SU)
+    #    print(SU)'''
 
-    #print('>base_test inicializado. Probando carga de archivo .bed.')
+    '''#print('>base_test inicializado. Probando carga de archivo .bed.')
     #nom_bed = 'Dupays2015';
     #path_bed = 'D:\\Dropbox\\Doctorado\\3-Genes transactivados rio abajo\\0-Fuentes\\Papers ChIP-seq\\';
     #print('>Probando leer_bed con "' + nom_bed + '" en "' + path_bed + '".')
@@ -1119,16 +1124,16 @@ def _main_test():
     #print('>Archivo leido y cargado. Mostrando dict_range.')
     #for key in base_test.dict_range.keys():
     #    print(key)
-    #    print(base_test.dict_range[key])
+    #    print(base_test.dict_range[key])'''
 
-    #print('>base_test inicializado. Inicializando revision de genoma.')
+    '''#print('>base_test inicializado. Inicializando revision de genoma.')
     #base_test.cargar_promotores([-1500, 1500]);
     #print('>Carga de promotores finalizada. Mostrando dict_range.')
     #for key in base_test.dict_range.keys():
     #    print(key)
-    #    print(base_test.dict_range[key])
+    #    print(base_test.dict_range[key])'''
 
-    #print('>base_test inicializado. Probando _consulta_secuencia_fasta().')
+    '''#print('>base_test inicializado. Probando _consulta_secuencia_fasta().')
     #pos_ini = 10000000;
     #pos_end = pos_ini + 100;
     #print('>Secuencia con consulta fasta')
@@ -1136,16 +1141,16 @@ def _main_test():
     #print('>Secuencia con consulta Entrez en clase')
     #print(base_test._consulta_secuencia_entrez('chr1', pos_ini, pos_end));
     #print('>Secuencia con funcion ConsultaSecuencia') ### FUNCION BORRADA DEL ARCHIVO
-    #print(ConsultaSecuencia(base_test._buscar_chrid('chr1'), pos_ini, pos_end));
+    #print(ConsultaSecuencia(base_test._buscar_chrid('chr1'), pos_ini, pos_end));'''
 
-    #print('>base_test inicializado. Cargando rango en chr1.')
+    '''#print('>base_test inicializado. Cargando rango en chr1.')
     #base_test.cargar_rango('chr1',1000100,1000200);
     #print('>Primer rango cargado en chr1. Cargando segundo rango.')
     #base_test.cargar_rango('chr1',1200100,1200200);
     #print('>Segundo rango cargado en chr1. Cargando rango en chr2.')
     #base_test.cargar_rango('chr2',1000100,1000200);
     #print('>Rango cargado en chr2. Devolviendo dict_range en base_test.')
-    #print(base_test.dict_range)
+    #print(base_test.dict_range)'''
 
     #L_out = bed_test; 
     return L_out
