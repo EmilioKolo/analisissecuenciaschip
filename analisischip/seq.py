@@ -5,6 +5,9 @@ import logging
 # Analisis de secuencias y genomas
 from Bio import Entrez, SeqIO
 from pyensembl import EnsemblRelease
+# Generacion de histogramas
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 ###################################### CLASES #####################################
@@ -42,7 +45,7 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         # Defino cantidad de avisos por verbose
         self.verbose_n = 4; 
         self.verbose_cont = 0; 
-        self.verbose_len = 10000; 
+        self.verbose_len = 100; 
         return None
 
 
@@ -404,6 +407,88 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         else:
             dir_arch = os.path.join(self.path_fasta, nom_arch);
         return dir_arch, nom_arch
+
+
+    def _dist_genes_cercanos(self):
+        # Devuelve una matriz con la distancia a cada uno de los genes en self.genes_cercanos
+        # Cada gen en self.genes_cercanos se transforma en una lista con el id del gen en pos 0 seguido de dist_genes
+        # dist_genes es la distancia entre sitio de union y el +1 del gen, contado en direccion forward o reverse segun la direccion del gen
+
+        # Defino verbose
+        verbose = self._check_verbose('_dist_genes_cercanos'); 
+        # Corro self._obtener_genoma() si self.genome es elemento vacio
+        if self.genome == '':
+            logging.warning('Genoma vacio. Se usa self._obtener_genoma() para buscar el elemento con self.genome_name=' + str(self.genome_name)); 
+            self._obtener_genoma(); 
+        # Inicializo la variable que se devuelve
+        M_dist_genes = []; 
+        # Recorro self.genes_cercanos
+        for key in self.genes_cercanos.keys():
+            # Recorro self.genes_cercanos[key]
+            for i in range(len(self.genes_cercanos[key])):
+                # Defino el gen con la lista de rangos
+                curr_L_gene = self.genes_cercanos[key][i]; 
+                # Extraigo el gene_id y la lista de rangos de curr_L_gene
+                curr_gene_id = curr_L_gene[0]; 
+                curr_L_range = curr_L_gene[1]; 
+                # Display
+                if verbose and self.verbose_cont%self.verbose_len == 0:
+                    print()
+                    print('gene_id parseado: ' + str(curr_gene_id))
+                # Uso try para el curr_gene_id por si hay errores
+                try:
+                    # Consigo el elemento gen con curr_gene_id
+                    curr_gene = self.genome.gene_by_id(curr_gene_id); 
+                except:
+                    logging.error('No se pudo encontrar el gene_id ' + str(curr_gene_id)); 
+                    curr_gene = ''; 
+                # Sigo solo si se encontro curr_gene
+                if curr_gene != '':
+                    # Reinicio L_dist_genes para cargar los datos
+                    L_dist_genes = []; 
+                    L_dist_genes.append(curr_gene.gene_id); 
+                    # Defino pos0 y forward
+                    pos0, forward = self._obtener_pos0_forward(curr_gene.start, curr_gene.end, curr_gene.strand); 
+                    # Display
+                    if verbose and self.verbose_cont%self.verbose_len == 0:
+                        print('Gen obtenido: ' + str(curr_gene))
+                        print('pos0: ' + str(pos0) + '; forward: ' + str(forward))
+                    # Recorro curr_L_range
+                    for curr_range in curr_L_range:
+                        # Display
+                        if verbose and self.verbose_cont%self.verbose_len == 0:
+                            print('curr_range: ' + str(curr_range))
+                        # Sin importar forward, si pos0 esta dentro del rango, dist_range es 0
+                        if curr_range[0] < pos0 and curr_range[1] > pos0:
+                            dist_range = 0; 
+                        # Defino el caso forward
+                        elif forward:
+                            # Si el rango esta rio arriba del +1 da numero negativo
+                            if curr_range[1] < pos0:
+                                dist_range = curr_range[1] - pos0; 
+                            # Si el rango esta rio abajo del +1 da numero positivo
+                            elif curr_range[0] > pos0:
+                                dist_range = curr_range[0] - pos0; 
+                        # Defino el caso reverse
+                        else:
+                            # Si el rango esta rio abajo del +1 da numero positivo
+                            if curr_range[1] < pos0:
+                                dist_range = pos0 - curr_range[1]; 
+                            # Si el rango esta rio arriba del +1 da numero negativo
+                            elif curr_range[0] > pos0:
+                                dist_range = pos0 - curr_range[0]; 
+                        # Display
+                        if verbose and self.verbose_cont%self.verbose_len == 0:
+                            print('dist_range: ' + str(dist_range))
+                        # Cargo dist_range en L_dist_genes
+                        L_dist_genes.append(dist_range); 
+                    # Una vez recorridos todos los rangos, cargo L_dist_genes en M_dist_genes
+                    M_dist_genes.append(L_dist_genes[:]); 
+                # Display
+                elif verbose and self.verbose_cont%self.verbose_len == 0:
+                    print('Gen no obtenido.')
+                self.verbose_cont += 1; 
+        return M_dist_genes
 
 
     def _download_chr(self, chr_n, retries=10):
@@ -844,6 +929,47 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         return self
 
 
+    def histogramas_dist_genes(self, rango_hist, nombre_out, L_bins=[], path_out='', ext_out='.png'):
+        # Crea histogramas de distancia a genes para todos los rangos en self.genes_cercanos
+
+        # Creo la matriz de datos con la funcion _dist_genes_cercanos()
+        M_dist_genes = self._dist_genes_cercanos(); 
+        # Creo una lista de distancias en base a M_dist_genes
+        L_dist = []; 
+        # Recorro M_dist_genes
+        for i in range(len(M_dist_genes)):
+            # Agarro cada valor de distancia en M_dist_genes (salteo gen en posicion 0)
+            for dist in M_dist_genes[i][1:]:
+                L_dist.append(dist); 
+        # Creo un histograma
+        n, bins, patches = plt.hist(x=L_dist, bins=L_bins, color='#040499', rwidth=0.9, alpha=0.8); 
+        # Display
+        plt.grid(axis='y', alpha=0.6); 
+        plt.xlabel('Distancia al +1'); 
+        plt.ylabel('Frecuencia'); 
+        plt.title(nombre_out); 
+        # Defino valor maximo para ymax
+        maxfreq = n.max(); 
+        # Defino orden de magnitud para redondear ymax
+        O_mag = 10; 
+        # Defino ylim en base a maxfreq y O_mag
+        plt.ylim(ymax=np.ceil(maxfreq / O_mag) * O_mag if maxfreq % O_mag else maxfreq + O_mag); 
+        # Defino xlim en base a rango_hist
+        plt.xlim(xmin=rango_hist[0], xmax=rango_hist[1]); 
+        # Defino el path donde se guarda el archivo
+        if path_out == '':
+            filepath = nombre_out + ext_out; 
+        else:
+            filepath = os.path.join(path_out, nombre_out + ext_out); 
+        # Guardo el archivo
+        plt.savefig(filepath); 
+        # Display
+        plt.show(); 
+        # Cierro para que no se rompa nada
+        plt.close(); 
+        return self
+
+
     def leer_bed(self, nom_bed, path_bed='.\\', col_chr=0, col_ini=1, col_end=2, sep='\t', ext='.bed'):
         # Carga todos los rangos en un archivo .bed con los outputs de ChIP-seq a self.dict_range
         # Usa cargar_rango() con los rangos obtenidos
@@ -1056,13 +1182,28 @@ def _main_test():
 
     # Defino la direccion del .fasta
     path_usado = 'D:\\Archivos doctorado\\Genomas\\'; 
-    # Defino la direccion del output
+    # Defino las direcciones de output
     path_out = 'D:\\Archivos doctorado\\Output_dump\\'; 
+    path_out_graficos = 'D:\\Archivos doctorado\\Output_dump\\Graficos\\'; 
     # Pruebo inicializar seq_data
     print('>Inicializando base_test.')
     base_test = seq_data('mm9', path_fasta=path_usado); # D:\\Archivos doctorado\\Genomas\\ 
     #print('>base_test inicializado.')
 
+
+    print('>base_test inicializado. Cargando superposicion_test_genes.')
+    superposicion_test = base_test.clonar(); 
+    superposicion_test.cargar_rangos_archivo('superposicion_test_genes', cargar_genes=True, path_in=path_out); 
+    print('superposicion_test cargado. Iniciando generacion de datos para histogramas.')
+    # superposicion_test._set_verbose('_dist_genes_cercanos', True); 
+    L_bins = [-1501, -1250, -1000, -750, -500, -250, -1, 250, 500, 750, 1000, 1250, 1500]; 
+    #L_bins = [-1501, -1450, -1400, -1350, -1300, -1250, -1200, -1150, -1100, -1050, -1000, -950, -900, -850, -800, -750, -700, -650, -600, -550, 
+    #          -500, -450, -400, -350, -300, -250, -200, -150, -100, -50, -1, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700,
+    #          750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1250, 1300, 1350, 1400, 1450, 1500]; 
+    #L_bins = [-501, -475, -450, -425, -400, -375, -350, -325, -300, -275, -250, -225, -200, -175, -150, -125, -100, -75, -50, -25, 0, 
+    #          25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 475, 501]; 
+    #L_bins = [-501, -450, -400, -350, -300, -250, -200, -150, -100, -50, 0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 501]; 
+    superposicion_test.histogramas_dist_genes((-500, 500), 'SitiosUnionAAGTG_total', L_bins=L_bins, path_out=path_out_graficos); 
 
     '''print('>base_test inicializado. Cargando bed_test y sitios_test de archivos guardados.')
     bed_test = base_test.clonar(); 
