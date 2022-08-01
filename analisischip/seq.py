@@ -1191,7 +1191,31 @@ def _main_test():
     #print('>base_test inicializado.')
 
 
-    print('>base_test inicializado. Cargando superposicion_test_genes.')
+    '''print('>base_test inicializado. Creando promotores_test.')
+    print('* Iniciando con rango100k')
+    promotores_test100k = base_test.clonar(); 
+    rango_promotor100k = [-100000, 100000]; 
+    promotores_test100k.cargar_promotores(rango_promotor100k); 
+    promotores_test100k.guardar_rangos_archivo('promotores_test_rango100k', path_out=path_out); 
+    print('* Iniciando con rango10k')
+    promotores_test10k = base_test.clonar(); 
+    rango_promotor10k = [-10000, 10000]; 
+    promotores_test10k.cargar_promotores(rango_promotor10k); 
+    promotores_test10k.guardar_rangos_archivo('promotores_test_rango10k', path_out=path_out); 
+
+    print('>promotores_test creados y guardados. Iniciando creacion de sitios_test.')
+    L_sitios = ['AAGTG']; 
+    print('* Iniciando con rango100k')
+    promotores_test100k._set_verbose('buscar_sitios_union_lista', True); 
+    sitios_test100k = promotores_test100k.buscar_sitios_union_lista(L_sitios, genes_cercanos=True); 
+    sitios_test100k.guardar_rangos_archivo('sitios_test_rango100k_AAGTG', guardar_genes=True, path_out=path_out); 
+    print('* Iniciando con rango10k')
+    promotores_test10k._set_verbose('buscar_sitios_union_lista', True); 
+    sitios_test10k = promotores_test10k.buscar_sitios_union_lista(L_sitios, genes_cercanos=True); 
+    sitios_test10k.guardar_rangos_archivo('sitios_test_rango10k_AAGTG', guardar_genes=True, path_out=path_out); 
+    print('>Todo finalizado')'''
+
+    '''print('>base_test inicializado. Cargando superposicion_test_genes.')
     superposicion_test = base_test.clonar(); 
     superposicion_test.cargar_rangos_archivo('superposicion_test_genes', cargar_genes=True, path_in=path_out); 
     print('superposicion_test cargado. Iniciando generacion de datos para histogramas.')
@@ -1203,7 +1227,7 @@ def _main_test():
     #L_bins = [-501, -475, -450, -425, -400, -375, -350, -325, -300, -275, -250, -225, -200, -175, -150, -125, -100, -75, -50, -25, 0, 
     #          25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 475, 501]; 
     #L_bins = [-501, -450, -400, -350, -300, -250, -200, -150, -100, -50, 0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 501]; 
-    superposicion_test.histogramas_dist_genes((-500, 500), 'SitiosUnionAAGTG_total', L_bins=L_bins, path_out=path_out_graficos); 
+    superposicion_test.histogramas_dist_genes((-500, 500), 'SitiosUnionAAGTG_total', L_bins=L_bins, path_out=path_out_graficos); '''
 
     '''print('>base_test inicializado. Cargando bed_test y sitios_test de archivos guardados.')
     bed_test = base_test.clonar(); 
