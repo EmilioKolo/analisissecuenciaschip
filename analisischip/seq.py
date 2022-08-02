@@ -1040,14 +1040,14 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
 
         # Si self_reset es True, se reinicia self.dict_range
         if self_reset:
-            self._reset();
+            self._reset(); 
         # Recorro cada elemento de L_bed
         for nom_bed in L_bed:
-            self.leer_bed(nom_bed, path_bed=path_bed, col_chr=col_chr, col_ini=col_ini, col_end=col_end, sep=sep, ext=ext);
+            self.leer_bed(nom_bed, path_bed=path_bed, col_chr=col_chr, col_ini=col_ini, col_end=col_end, sep=sep, ext=ext); 
         # Reviso que el largo de L_sitios sea mayor a 0
         if len(L_sitios) > 0:
             # Si hay sitios de union dados, se inicializa otro objeto para devolver
-            seq_out = self.buscar_sitios_union_lista(L_sitios);
+            seq_out = self.buscar_sitios_union_lista(L_sitios); 
         return seq_out
 
 
@@ -1120,7 +1120,7 @@ Funciones para hacer:
     # Diagrama de Venn con peaks de ChIP-seq vs sitios de union cerca de genes
     '''
 
-    def __init__(self, genome_name, path_fasta='', path_archivos=''):
+    def __init__(self, genome_name, path_fasta='', path_archivos='.\\'):
         # Cargo los datos necesarios para inicializar seq_data
         self.genome_name = genome_name; 
         self.path_fasta = path_fasta; 
@@ -1131,40 +1131,107 @@ Funciones para hacer:
         return None
 
 
-    def _agregar_seq_data(self, nom_arch='', path_arch=''):
+    def _agregar_seq_data(self, nom_arch='', path_arch='.\\', ext='.csv', cargar_genes=True):
         # Inicializa un objeto seq_data y lo agrega a self.L_seq
         # Si nom_arch es distinto de string vacio, se cargan de ahi los rangos
         # Si path_arch es string vacio, se usa self.path_archivos
 
-        ### FALTA:
-        # Revisar si nom_arch y/o path_arch son string vacios
-        # Usar funcion para cargar archivos de seq_data
-        # Agregar variables que falten
-        ###
-
         # Inicializo el objeto seq_data con los datos dados en init
-        new_seq = seq_data(self.genome_name, path_fasta=self.path_fasta); 
+        new_seq = self._inicializar_seq_data(); 
+        # Inicializo booleano por si falla abrir nom_arch
+        arch_presente = nom_arch != ''; 
+        # Reviso que nom_arch no sea string vacio
+        if arch_presente:
+            # Si nom_arch contiene texto, determino el path del archivo dependiendo de path_arch y self.path_archivos
+            if path_arch != '.\\':
+                path_usado = path_arch; 
+            elif self.path_archivos != '.\\':
+                path_usado = self.path_archivos; 
+            # Si ninguno de los dos contiene texto, busco en la carpeta actual
+            else:
+                path_usado = '.\\'; 
+            # Una vez definido path_usado, cargo el archivo nom_arch en path_usado
+            new_seq.cargar_rangos_archivo(nom_arch, ext=ext, cargar_genes=cargar_genes, path_in=path_usado); 
         # Cargo new_seq en self.L_seq
         self.L_seq.append(new_seq); 
         return self
 
 
-    def agregar_chipseq_peaks(self, bed_arch, bed_path=''):
-        # 
+    def _inicializar_seq_data(self):
+        # Inicializa un objeto seq_data y lo devuelve
+        # Permite centralizar la creacion de nuevos objetos seq_data (por si hay que agregar algo en masa)
+        new_seq = seq_data(self.genome_name, path_fasta=self.path_fasta); 
+        return new_seq
 
-        ### FALTA:
-        # Usar _agregar_seq_data() con bed_arch
-        ###
+
+    def agregar_chipseq_peaks(self, bed_arch, bed_path='.\\', ext='.bed'):
+        # Inicializa un objeto seq_data y le carga los peaks de un archivo .bed 
+        # Si ext es .csv, usa _agregar_seq_data() para cargar seq_data
+
+        # Si ext es .bed, creo new_seq y cargo bed_arch
+        if ext=='.bed':
+            # Inicializo el objeto seq_data con los datos dados en init
+            new_seq = self._inicializar_seq_data(); 
+            # Cargo los peaks con leer_bed()
+            new_seq.leer_bed(bed_arch, path_bed=bed_path); 
+            # Cargo new_seq en self.L_seq
+            self.L_seq.append(new_seq); 
+        # Si ext es .csv, uso _agregar_seq_data() para cargar el archivo
+        elif ext=='.csv':
+            # Se usa cargar_genes=False porque son peaks de ChIP-seq sin genes asociados (inicialmente)
+            self._agregar_seq_data(nom_arch=bed_arch, path_arch=bed_path, cargar_genes=False); 
+        # Si ext no se reconoce, se intenta usar _agregar_seq_data() despues de tirar warning
+        else:
+            logging.warning('No se reconoce extension "' + ext + '". Se intenta cargar con cargar_rangos_archivo().'); 
+            # Se usa cargar_genes=False porque son peaks de ChIP-seq sin genes asociados (inicialmente)
+            self._agregar_seq_data(nom_arch=bed_arch, path_arch=bed_path, cargar_genes=False, ext=ext); 
         return self
 
 
-    def agregar_promotores_rango(self, rango_usado, promotores_arch='', promotores_path='', sitios_union=False, L_sitios=[]):
-        # 
+    def agregar_promotores_rango(self, rango_usado, promotores_arch='', promotores_path='.\\', L_sitios=[], sitios_arch='', sitios_path='.\\', verbose=False):
+        # Inicializa un objeto seq_data y le carga promotores en rango_usado
+        # Si promotores_arch contiene texto, se usa _agregar_seq_data() para cargar seq_data
+        # Si sitios_union es True, se usa L_sitios para crear otro objeto seq_data con sitios de union
 
-        ### FALTA:
-        # Usar _agregar_seq_data() con promotores_arch 
-        ###
+        # Reviso si promotores_arch contiene un archivo
+        if promotores_arch != '':
+            # Se usa cargar_genes=True porque son regiones de promotores asociadas a genes
+            self._agregar_seq_data(nom_arch=promotores_arch, path_arch=promotores_path); 
+        # Si no contiene archivo, uso cargar_promotores()
+        else:
+            # Inicializo el objeto seq_data con los datos dados en init
+            prom_seq = self._inicializar_seq_data(); 
+            # Uso cargar_promotores() para agregar promotores a rango_usado
+            prom_seq.cargar_promotores(rango_usado); 
+            # Cargo prom_seq en self.L_seq
+            self.L_seq.append(prom_seq); 
+        # Si L_sitios contiene elementos (sitios de union), tambien creo un elemento seq_data con sitios de union
+        if len(L_sitios) > 0:
+            # Uso self.buscar_sitios_union() para L_sitios con id_L_seq en el ultimo elemento de self.L_seq
+            self.buscar_sitios_union(L_sitios, id_L_seq=-1, sitios_arch=sitios_arch, sitios_path=sitios_path, verbose=verbose); 
         return self
+
+
+    def buscar_sitios_union(self, L_sitios, id_L_seq=0, sitios_arch='', sitios_path='.\\', verbose=False):
+        # Busca sitios de union dentro de L_sitios en el elemento seq_data en posicion id_L_seq en self.L_seq
+        # Si sitios_arch contiene texto, carga el archivo de sitios_path en vez de usar self.L_seq
+        
+        # Reviso si sitios_arch contiene un archivo
+        if sitios_arch != '':
+            # Se usa cargar_genes=True porque son sitios de union asociados a genes
+            self._agregar_seq_data(nom_arch=sitios_arch, path_arch=sitios_path); 
+        # Si no contiene un archivo, uso id_L_seq
+        else:
+            # Extraigo prom_seq de self.L_seq
+            prom_seq = self.L_seq[id_L_seq]; 
+            # Configuro verbose
+            prom_seq._set_verbose('buscar_sitios_union_lista', verbose); 
+            # Corro buscar_sitios_union_lista para crear sitios_seq
+            sitios_seq = prom_seq.buscar_sitios_union_lista(L_sitios, genes_cercanos=True); 
+            # Cargo sitios_seq en self.L_seq
+            self.L_seq.append(sitios_seq); 
+        return self
+
 
 
 #################################### FUNCIONES ####################################
