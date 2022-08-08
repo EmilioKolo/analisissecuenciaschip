@@ -1453,10 +1453,13 @@ def _main_test():
     
 
     # Defino la direccion del .fasta
-    path_usado = 'D:\\Archivos doctorado\\Genomas\\'; 
+    path_usado = 'D:\\Archivos doctorado\\Genomas\\'; # PC casa
+    path_usado = 'X:\\Genomas\\'; # PC iB3
     # Defino las direcciones de output
-    path_out = 'D:\\Archivos doctorado\\Output_dump\\'; 
-    path_out_graficos = 'D:\\Archivos doctorado\\Output_dump\\Graficos\\'; 
+    path_out = 'D:\\Archivos doctorado\\Output_dump\\'; # PC casa
+    path_out_graficos = 'D:\\Archivos doctorado\\Output_dump\\Graficos\\'; # PC casa
+    path_out = 'X:\\Output_dump\\'; # PC iB3
+    path_out_graficos = 'X:\\Output_dump\\Graficos\\'; # PC iB3
     # Pruebo inicializar seq_data
     print('>Inicializando base_test.')
     base_test = seq_data('mm9', path_fasta=path_usado); # D:\\Archivos doctorado\\Genomas\\ 
@@ -1742,75 +1745,6 @@ def _main_test():
 ######################################## OLD ######################################
 ###################################################################################
 
-
-def buscar_en_secuencia(busq, seq):
-    # Busca una secuencia "busq" en una secuencia mas larga "seq"
-    # Devuelve la posicion en la que se encontro busq y True si se encuentra busq
-    # Devuelve len(seq)-len(busq)+1 y False si no se encuentra busq
-    pos = 0;
-    encontrado = False;
-    # Recorro una por una las posiciones de seq hasta encontrar busq
-    while pos < (len(seq)-len(busq)+1) and (not encontrado):
-        if seq[pos:pos+len(busq)] == busq:
-            encontrado = True;
-        else:
-            pos += 1;
-    return pos, encontrado
-
-
-def buscar_en_seq_ambas_direcciones(busq, seq):
-    # Funcion que usa buscar_en_secuencia() para buscar todas las ocurrencias de busq en seq
-    # Busca en ambas direcciones y registra varias ocurrencias
-    L_pos = [];
-    loop_1 = True;
-    curr_pos = 0;
-    seq_pos = 0;
-    # Primero corro buscar_en_secuencia() para busq y seq normalmente
-    while loop_1:
-        curr_pos, loop_1 = buscar_en_secuencia(busq, seq[seq_pos:]);
-        if loop_1:
-            L_pos.append(seq_pos+curr_pos);
-            seq_pos = seq_pos + curr_pos + 1;
-    # Despues vuelvo a correr con la secuencia reversa
-    rev_seq = seq_data.complemento_secuencia(seq, adn=True);
-    loop_1 = True;
-    curr_pos = 0;
-    seq_pos = 0;
-    while loop_1:
-        curr_pos, loop_1 = buscar_en_secuencia(busq, rev_seq[seq_pos:]);
-        if loop_1:
-            L_pos.append(-(seq_pos+curr_pos));
-            seq_pos = seq_pos + curr_pos + 1;
-    return L_pos
-
-
-def buscar_en_seq_2dir_unificado(busq, seq):
-    # Funcion que usa buscar_en_secuencia() para buscar todas las ocurrencias de busq en seq
-    # Busca en ambas direcciones y registra varias ocurrencias
-
-    L_pos = [];
-    loop_1 = True;
-    curr_pos = 0;
-    seq_pos = 0;
-    # Primero corro buscar_en_secuencia() para busq y seq normalmente
-    while loop_1:
-        curr_pos, loop_1 = buscar_en_secuencia(busq, seq[seq_pos:]);
-        if loop_1:
-            n = seq_pos+curr_pos;
-            L_pos.append(n-len(seq));
-            seq_pos = seq_pos + curr_pos + 1;
-    # Despues vuelvo a correr con la secuencia reversa
-    rev_seq = seq_data.complemento_secuencia(seq, adn=True);
-    loop_1 = True;
-    curr_pos = 0;
-    seq_pos = 0;
-    while loop_1:
-        curr_pos, loop_1 = buscar_en_secuencia(busq, rev_seq[seq_pos:]);
-        if loop_1:
-            n = seq_pos+curr_pos;
-            L_pos.append(-n-len(busq));
-            seq_pos = seq_pos + curr_pos + 1;
-    return L_pos
 
 
 def max_range(M_num):
