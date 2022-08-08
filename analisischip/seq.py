@@ -1444,6 +1444,7 @@ def _main_test():
     L_name_confirmados = ['Nppa', 'Hopx', 'Adora1', 'Slc8a1', 'Mov10l1', 'Gja5', 'Myocd', 'Calr', 'Ece1', 'Gata6', 'Mef2c', 'Pitx2']; 
     L_id_confirmados = ['ENSMUSG00000041616', 'ENSMUSG00000059325', 'ENSMUSG00000042429', 'ENSMUSG00000054640', 'ENSMUSG00000015365', 'ENSMUSG00000057123', 
 		                'ENSMUSG00000020542', 'ENSMUSG00000003814', 'ENSMUSG00000057530', 'ENSMUSG00000005836', 'ENSMUSG00000005583', 'ENSMUSG00000028023']; 
+
     '''for i in range(len(L_name_confirmados)):
         print('L_name_confirmados[i]: ' + str(L_name_confirmados[i]))
         print('L_id_confirmados[i]: ' + str(L_id_confirmados[i]))
@@ -1454,12 +1455,12 @@ def _main_test():
 
     # Defino la direccion del .fasta
     path_usado = 'D:\\Archivos doctorado\\Genomas\\'; # PC casa
-    path_usado = 'X:\\Genomas\\'; # PC iB3
+    #path_usado = 'X:\\Genomas\\'; # PC iB3
     # Defino las direcciones de output
     path_out = 'D:\\Archivos doctorado\\Output_dump\\'; # PC casa
     path_out_graficos = 'D:\\Archivos doctorado\\Output_dump\\Graficos\\'; # PC casa
-    path_out = 'X:\\Output_dump\\'; # PC iB3
-    path_out_graficos = 'X:\\Output_dump\\Graficos\\'; # PC iB3
+    #path_out = 'X:\\Output_dump\\'; # PC iB3
+    #path_out_graficos = 'X:\\Output_dump\\Graficos\\'; # PC iB3
     # Pruebo inicializar seq_data
     print('>Inicializando base_test.')
     base_test = seq_data('mm9', path_fasta=path_usado); # D:\\Archivos doctorado\\Genomas\\ 
