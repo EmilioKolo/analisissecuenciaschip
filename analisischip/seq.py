@@ -397,6 +397,37 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         return seq
 
 
+    def _definir_pos_gen(self, start, range_start, range_end, end=''):
+        # Define si un gen que empieza en start y termina en end cae dentro, rio arriba o rio abajo de un rango
+        # Si no se da end, se busca solo si start cae dentro del rango
+
+        # Defino la variable que se devuelve
+        ret = ''; 
+        # Reviso si no se da end
+        if str(end) == '':
+            # Si start esta antes del inicio del rango, se devuelve numero negativo
+            if start < min(range_start, range_end):
+                ret = start-min(range_start, range_end); 
+            # Si start esta despues del final del rango, se devuelve numero positivo
+            elif start > max(range_start, range_end):
+                ret = start-max(range_start, range_end); 
+            # Si start cae dentro del rango, se devuelve 0
+            else:
+                ret = 0; 
+        # Si se da end, hay que ver que cualquiera de los dos caiga dentro del rango
+        else:
+            # Si start y end estan antes del inicio del rango, se devuelve numero negativo
+            if max(start, end) < min(range_start, range_end):
+                ret = max(start, end)-min(range_start, range_end); 
+            # Si start y end estan despues del final del rango, se devuelve numero positivo
+            elif min(start, end) > max(range_start, range_end):
+                ret = min(start, end)-max(range_start, range_end); 
+            # Si start o end caen dentro del rango, se devuelve 0
+            else:
+                ret = 0; 
+        return ret
+
+
     def _dir_arch(self, chr_n):
         # Devuelve la direccion del archivo correspondiente a chr_n y el nombre del archivo
 
@@ -672,17 +703,40 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
 
         # Reviso strand
         if strand == strand_forward:
-            forward = True;
+            forward = True; 
         elif strand == strand_reverse:
-            forward = False;
+            forward = False; 
         else:
-            logging.error('Strand "' + str(strand) + '" no definida como forward ni reverse. Se usa forward como default.')
-            forward = True;
+            logging.error('Strand "' + str(strand) + '" no definida como forward ni reverse. Se usa forward como default.'); 
+            forward = True; 
         if forward:
-            ret = pos_ini;
+            ret = pos_ini; 
         else:
-            ret = pos_end;
+            ret = pos_end; 
         return ret, forward
+
+
+    def _obtener_pos0_forward_end(self, pos_ini, pos_end, strand, strand_forward='+', strand_reverse='-'):
+        # Recibe pos_ini, pos_end y strand de un elemento gen de Entrez
+        # En base a eso, define si el gen es forward o reverse y devuelve la posicion del +1 y del final del gen
+        # Permite cambiar que se define como forward y reverse
+
+        # Reviso strand para definir forward
+        if strand == strand_forward:
+            forward = True; 
+        elif strand == strand_reverse:
+            forward = False; 
+        else:
+            logging.error('Strand "' + str(strand) + '" no definida como forward ni reverse. Se usa forward como default.'); 
+            forward = True; 
+        # Uso forward para definir start y end
+        if forward:
+            start = pos_ini; 
+            end = pos_end; 
+        else:
+            start = pos_end; 
+            end = pos_ini; 
+        return start, forward, end
 
 
     def _reset(self):
@@ -909,6 +963,117 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         return ret_seq
 
 
+    def genes_cerca_rangos(self, dist_max, genome_version='', organism='', usar_id=False):
+        # Devuelve una lista de los genes mas cercanos (en cada direccion) a los rangos en self.dict_range
+        # Busca hasta dist_max en cada direccion (rio arriba y rio abajo)
+
+        # Inicializo la lista que se devuelve
+        L_out = []; 
+        # Chequeo si self.genome esta cargado
+        if self.genome == '':
+            # Si no esta cargado, uso self._obtener_genoma() para cargarlo
+            self._obtener_genoma(genome_version, organism); 
+        # Recorro las keys de self.dict_range
+        for key in self.dict_range.keys():
+            # Agarro la lista de rangos en self.dict_range
+            L_rangos = self.dict_range[key]; 
+            # Recorro cada uno de los rangos
+            for curr_range in L_rangos:
+                # Defino contig
+                if key[:3] == 'chr':
+                    contig = key[3:]; 
+                else:
+                    contig = key; 
+                # Busco la lista de genes cerca del rango (en el rango +/- dist_max)
+                L_genes_cerca = self.genome.genes_at_locus(contig, curr_range[0]-dist_max, end=curr_range[1]+dist_max); 
+                # Defino una lista de genes dentro del rango y el gen mas cercano rio arriba y rio abajo
+                genes_dentro = []; 
+                gen_rio_arriba = ''; 
+                dist_rio_arriba = dist_max + 1; 
+                gen_rio_abajo = ''; 
+                dist_rio_abajo = dist_max + 1; 
+                # Recorro los genes cerca para determinar el mas cercano a cada lado
+                for gen_cerca in L_genes_cerca:
+                    # Defino gen_id
+                    if usar_id:
+                        gen_id = gen_cerca.gene_id; 
+                    else:
+                        gen_id = gen_cerca.gene_name; 
+                    # Obtengo pos0, forward y end en base al gen
+                    pos0, forward, gene_end = self._obtener_pos0_forward_end(gen_cerca.start, gen_cerca.end, strand=gen_cerca.strand); 
+                    # Defino si gen_cerca esta dentro, rio arriba o rio abajo de curr_range
+                    pos_gen = self._definir_pos_gen(pos0, curr_range[0], curr_range[1], end=gene_end); 
+                    # pos_gen es menor a 0 si esta rio arriba, mayor a 0 si esta rio abajo y 0 si esta dentro del rango
+                    if pos_gen == 0: # Dentro
+                        # Si gen_cerca cae dentro, se agrega a genes_dentro sin mas vueltas
+                        genes_dentro.append(str(gen_id)); 
+                    elif pos_gen < 0: # Rio arriba
+                        # Reviso si gen_cerca esta mas cerca del rango que gen_rio_arriba
+                        if dist_rio_arriba < pos_gen:
+                            gen_rio_arriba = str(gen_id); 
+                            dist_rio_arriba = int(pos_gen); 
+                    elif pos_gen > 0: # Rio abajo
+                        # Reviso si gen_cerca esta mas cerca del rango que gen_rio_abajo
+                        if dist_rio_abajo > pos_gen:
+                            gen_rio_abajo = str(gen_id); 
+                            dist_rio_abajo = int(pos_gen); 
+                # Una vez revisados L_genes_cerca, veo si hay genes_dentro
+                if len(genes_dentro) > 0:
+                    # Si hay genes_dentro, registro cada uno en L_out y no veo rio arriba ni rio abajo
+                    for gen in genes_dentro:
+                        # Solo agrego al gen si no esta en L_out
+                        if not(gen in L_out):
+                            L_out.append(str(gen)); 
+                # Agarro gen_rio_arriba y gen_rio_abajo, si los hay
+                ### ESTO SE PUEDE CAMBIAR reemplazando elif por if o vice-versa
+                elif gen_rio_arriba != '' or gen_rio_abajo != '':
+                    if gen_rio_arriba != '':
+                        # Solo agrego al gen si no esta en L_out
+                        if not(gen_rio_arriba in L_out):
+                            L_out.append(str(gen_rio_arriba)); 
+                    if gen_rio_abajo != '':
+                        # Solo agrego al gen si no esta en L_out
+                        if not(gen_rio_abajo in L_out):
+                            L_out.append(str(gen_rio_abajo)); 
+        return L_out
+
+
+    def genes_dentro_rangos(self, dist_max, genome_version='', organism='', usar_id=False):
+        # Devuelve una lista de todos los genes a distancia dist_max de los rangos en self.dict_range
+        # Busca hasta dist_max en cada direccion (rio arriba y rio abajo)
+
+        # Inicializo la lista que se devuelve
+        L_out = []; 
+        # Chequeo si self.genome esta cargado
+        if self.genome == '':
+            # Si no esta cargado, uso self._obtener_genoma() para cargarlo
+            self._obtener_genoma(genome_version, organism); 
+        # Recorro las keys de self.dict_range
+        for key in self.dict_range.keys():
+            # Agarro la lista de rangos en self.dict_range
+            L_rangos = self.dict_range[key]; 
+            # Recorro cada uno de los rangos
+            for curr_range in L_rangos:
+                # Defino contig
+                if key[:3] == 'chr':
+                    contig = key[3:]; 
+                else:
+                    contig = key; 
+                # Busco la lista de genes cerca del rango (en el rango +/- dist_max)
+                L_genes_cerca = self.genome.genes_at_locus(contig, curr_range[0]-dist_max, end=curr_range[1]+dist_max); 
+                # Agrego cada gen de L_genes_cerca a L_out
+                for curr_gen in L_genes_cerca:
+                    # Se puede usar gene_name o gene_id
+                    if usar_id:
+                        gen_id = curr_gen.gene_id; 
+                    else:
+                        gen_id = curr_gen.gene_name; 
+                    # Solo agrego un gen si no esta registrado en L_out
+                    if not(gen_id in L_out):
+                        L_out.append(str(gen_id)); 
+        return L_out
+
+
     def guardar_rangos_archivo(self, nombre_out:str, ext='.csv', guardar_genes=False, path_out='.\\', sep=';'):
         # Crea una tabla con los rangos registrados en self.dict_range o self.genes_cercanos
         # Pensado para volver a cargarlo en otro objeto seq_data
@@ -1029,6 +1194,30 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         return self
 
 
+    def lista_genes_dict(self):
+        # Devuelve una lista de todos los genes en self.genes_cercanos
+
+        # Defino verbose
+        verbose = self._check_verbose('lista_genes_dict'); 
+        # Inicializo la lista que se devuelve
+        L_out = []; 
+        # Recorro las key de self.genes_cercanos
+        for key in self.genes_cercanos.keys():
+            # Recorro cada lista correspondiente a un gen en self.genes_cercanos[key]
+            for L_gen in self.genes_cercanos[key]:
+                # El gen se encuentra en posicion 0 de L_gen
+                curr_gen = L_gen[0]; 
+                # Reviso si hay rangos asociados al gen
+                if len(L_gen[1]) > 0:
+                    # No anoto genes repetidos
+                    if not (curr_gen in L_out):
+                        L_out.append(str(curr_gen)); 
+                    # Si verbose es true, aviso cuando aparece un gen repetido (no deberia pasar)
+                    elif verbose:
+                        print('Gen repetido: ' + str(curr_gen))
+        return L_out
+
+
     def pipeline_chipseq(self, L_bed:list, L_sitios=[], path_bed='.\\', col_chr=0, col_ini=1, col_end=2, sep='\t', ext='.bed', self_reset=True):
         # Registra todos los peaks de chip-seq en archivos .bed cuyos nombres se listan en L_bed
         # Todos los archivos tienen que estar en la misma carpeta (path_bed)
@@ -1119,6 +1308,7 @@ Funciones para hacer:
 # Peaks de ChIP-seq sin sitios de union, peaks de ChIP-seq con sitios de union sin genes cerca
     # Diagrama de Venn con peaks de ChIP-seq vs sitios de union cerca de genes
     '''
+
 
     def __init__(self, genome_name, path_fasta='', path_archivos='.\\'):
         # Cargo los datos necesarios para inicializar seq_data
@@ -1242,10 +1432,25 @@ def _main_test():
 
     # Inicializo la variable que se devuelve
     L_out = []; 
-    
+
     # Paso datos de usuario a Entrez
     Entrez.email = 'ekolomenski@gmail.com'; 
     Entrez.api_key = '9bccbd4949f226a5930868df36c211e8b408'; 
+
+    # Defino genoma de raton mm9
+    mm9 = EnsemblRelease(67, species='mouse'); 
+
+    # Listas de genes confirmados usada
+    L_name_confirmados = ['Nppa', 'Hopx', 'Adora1', 'Slc8a1', 'Mov10l1', 'Gja5', 'Myocd', 'Calr', 'Ece1', 'Gata6', 'Mef2c', 'Pitx2']; 
+    L_id_confirmados = ['ENSMUSG00000041616', 'ENSMUSG00000059325', 'ENSMUSG00000042429', 'ENSMUSG00000054640', 'ENSMUSG00000015365', 'ENSMUSG00000057123', 
+		                'ENSMUSG00000020542', 'ENSMUSG00000003814', 'ENSMUSG00000057530', 'ENSMUSG00000005836', 'ENSMUSG00000005583', 'ENSMUSG00000028023']; 
+    '''for i in range(len(L_name_confirmados)):
+        print('L_name_confirmados[i]: ' + str(L_name_confirmados[i]))
+        print('L_id_confirmados[i]: ' + str(L_id_confirmados[i]))
+        print('genes_by_name: ' + str(mm9.genes_by_name(L_name_confirmados[i])))
+        print('gene_by_id: ' + str(mm9.gene_by_id(L_id_confirmados[i])))
+        print()'''
+    
 
     # Defino la direccion del .fasta
     path_usado = 'D:\\Archivos doctorado\\Genomas\\'; 
@@ -1257,6 +1462,93 @@ def _main_test():
     base_test = seq_data('mm9', path_fasta=path_usado); # D:\\Archivos doctorado\\Genomas\\ 
     #print('>base_test inicializado.')
 
+    print('>base_test inicializado. Cargando bed_dupays.')
+    bed_test = base_test.clonar(); 
+    bed_test.cargar_rangos_archivo('bed_dupays', path_in=path_out); 
+    print('>bed_dupays cargado. Buscando distancia de L_genes a los rangos.')
+    ### FALTA:
+    # Buscar lista de genes en superposicion_rango
+        # Funcion para buscar genes en seq_data.genes_cercanos
+    # Distancia a picos ChIP-seq de lista de genes
+        # Funcion para buscar distancia de rango/punto a rangos de seq_data
+	# Sitios de union de NKX2-5 en promotores de lista de genes
+        # Funcion para cargar rangos_promotores de lista de genes
+    ###
+
+    '''print('>base_test inicializado. Cargando bed_dupays.')
+    bed_test = base_test.clonar(); 
+    bed_test.cargar_rangos_archivo('bed_dupays', path_in=path_out); 
+    print('>bed_dupays cargado. Buscando genes alrededor de los rangos.')
+    genes_mostrados = 20; 
+    dist_busq = 1000000; # 1 millon
+    genes_alrededor = bed_test.genes_cerca_rangos(dist_busq, usar_id=True); 
+    print('Genes encontrados buscando hasta 1Mb: ' + str(len(genes_alrededor)))
+    print('Ejemplos: ' + str(genes_alrededor[:genes_mostrados]))
+    #print('>Buscando todos los genes a dist_busq de los rangos')
+    #genes_dentro = bed_test.genes_dentro_rangos(dist_busq); 
+    #print('Genes encontrados buscando hasta 1Mb usando gene_name: ' + str(len(genes_dentro)))
+    #print('Ejemplos: ' + str(genes_dentro[:genes_mostrados]))
+    #genes_dentro_id = bed_test.genes_dentro_rangos(dist_busq, usar_id=True); 
+    #print('Genes encontrados buscando hasta 1Mb usando gene_id: ' + str(len(genes_dentro_id)))
+    #print('Ejemplos: ' + str(genes_dentro_id[:genes_mostrados]))'''
+
+    '''print('>base_test inicializado. Cargando promotores rango 1500, 50k y 100k.')
+    promotores_test1500 = base_test.clonar(); 
+    promotores_test1500.cargar_rangos_archivo('promotores_test_rango1500', path_in=path_out); 
+    promotores_test10k = base_test.clonar(); 
+    promotores_test10k.cargar_rangos_archivo('promotores_test_rango10k', path_in=path_out); 
+    promotores_test100k = base_test.clonar(); 
+    promotores_test100k.cargar_rangos_archivo('promotores_test_rango100k', path_in=path_out); 
+    print('>promotores_test cargados. Cargando sitios rango 1500, 50k y 100k.')
+    sitios_test1500 = base_test.clonar(); 
+    sitios_test1500.cargar_rangos_archivo('sitios_test_rango1500_AAGTG', path_in=path_out, cargar_genes=True); 
+    sitios_test10k = base_test.clonar(); 
+    sitios_test10k.cargar_rangos_archivo('sitios_test_rango10k_AAGTG', path_in=path_out, cargar_genes=True); 
+    sitios_test100k = base_test.clonar(); 
+    sitios_test100k.cargar_rangos_archivo('sitios_test_rango100k_AAGTG', path_in=path_out, cargar_genes=True); 
+    '''
+    '''print('>sitios_test cargados. Mostrando listas de genes para sitios_test.')
+    genes_mostrados = 20; 
+    print('* genes con sitios de union en rango1500')
+    genes_rango1500 = sitios_test1500.lista_genes_dict(); 
+    print('Largo: ' + str(len(genes_rango1500)) + '. Mostrando primeros ' + str(genes_mostrados))
+    print(genes_rango1500[:genes_mostrados])
+    print('* genes con sitios de union en rango50k')
+    genes_rango10k = sitios_test10k.lista_genes_dict(); 
+    print('Largo: ' + str(len(genes_rango10k)) + '. Mostrando primeros ' + str(genes_mostrados))
+    print(genes_rango10k[:genes_mostrados])
+    print('* genes con sitios de union en rango100k')
+    genes_rango100k = sitios_test100k.lista_genes_dict(); 
+    print('Largo: ' + str(len(genes_rango100k)) + '. Mostrando primeros ' + str(genes_mostrados))
+    print(genes_rango100k[:genes_mostrados])'''
+    '''print('>sitios_test cargados. Buscando superposicion con resultados ChIP-seq.')
+    bed_dupays = base_test.clonar(); 
+    bed_dupays.cargar_rangos_archivo('bed_dupays', path_in=path_out); 
+    bed_dupays._set_verbose('superposicion_sitios', True); 
+    bed_dupays._set_verbose('_buscar_rango_contenido', True); 
+    print('>bed_dupays creado. Iniciando creacion de superposicion_rango1500.')
+    superposicion_rango1500 = bed_dupays.superposicion_sitios(sitios_test1500); 
+    superposicion_rango1500.guardar_rangos_archivo('superposicion_rango1500_AAGTG_genes', guardar_genes=True, path_out=path_out); 
+    print('>superposicion_rango1500 creado y guardado. Iniciando creacion de superposicion_rango10k.')
+    superposicion_rango10k = bed_dupays.superposicion_sitios(sitios_test10k);  
+    superposicion_rango10k.guardar_rangos_archivo('superposicion_rango10k_AAGTG_genes', guardar_genes=True, path_out=path_out); 
+    print('>superposicion_rango10k creado y guardado. Iniciando creacion de superposicion_rango100k.')
+    superposicion_rango100k = bed_dupays.superposicion_sitios(sitios_test100k); 
+    superposicion_rango100k.guardar_rangos_archivo('superposicion_rango100k_AAGTG_genes', guardar_genes=True, path_out=path_out); 
+    print('>superposicion_rango100k creado y guardado. Mostrando listas de genes para superposicion_rangos')
+    genes_mostrados = 20; 
+    print('* genes con sitios de union en rango1500')
+    genes_rango1500 = superposicion_rango1500.lista_genes_dict(); 
+    print('Largo: ' + str(len(genes_rango1500)) + '. Mostrando primeros ' + str(genes_mostrados))
+    print(genes_rango1500[:genes_mostrados])
+    print('* genes con sitios de union en rango10k')
+    genes_rango10k = superposicion_rango10k.lista_genes_dict(); 
+    print('Largo: ' + str(len(genes_rango10k)) + '. Mostrando primeros ' + str(genes_mostrados))
+    print(genes_rango10k[:genes_mostrados])
+    print('* genes con sitios de union en rango100k')
+    genes_rango100k = superposicion_rango100k.lista_genes_dict(); 
+    print('Largo: ' + str(len(genes_rango100k)) + '. Mostrando primeros ' + str(genes_mostrados))
+    print(genes_rango100k[:genes_mostrados])'''
 
     '''print('>base_test inicializado. Creando promotores_test.')
     print('* Iniciando con rango100k')
