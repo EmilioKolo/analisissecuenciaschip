@@ -1970,8 +1970,8 @@ def range_overlap(range1, range2):
 ###################################################################################
 
 
-output_dump = [];
+output_dump = []; 
 
 if __name__=='__main__':
-    output_dump.append(_main_test());
+    output_dump.append(_main_test()); 
 
