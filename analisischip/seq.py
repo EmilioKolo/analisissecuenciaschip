@@ -1338,12 +1338,6 @@ NCBI Build 37	Jul 2007	        mm9
 class seq_handler(object):
     '''
 Clase que crea y maneja objetos seq_data para correr los distintos pipelines
-Funciones para hacer:
-# Sitios de union en peaks de ChIP-seq con genes cerca
-    # Calculo de distancia de los sitios de union a los genes
-    # Histogramas de distancias
-# Peaks de ChIP-seq sin sitios de union, peaks de ChIP-seq con sitios de union sin genes cerca
-    # Diagrama de Venn con peaks de ChIP-seq vs sitios de union cerca de genes
     '''
 
 
