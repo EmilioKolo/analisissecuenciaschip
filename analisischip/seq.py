@@ -1454,7 +1454,7 @@ Clase que crea y maneja objetos seq_data para correr los distintos pipelines
         return self
 
 
-    def generar_archivos_base(self, L_rangos, L_genomas, L_bed, path_fasta='', path_archivos='.\\', path_bed='.\\'):
+    def generar_archivos_base(self, L_rangos, L_genomas, L_bed, descargar_genomas=False, path_fasta='', path_archivos='.\\', path_bed='.\\'):
         # Funcion para generar archivos de todo lo que sea necesario en relacion a seq_data
         # path_fasta y path_archivos toman lo que se ponga en __init__ si no se da ningun valor
 
@@ -1467,10 +1467,11 @@ Clase que crea y maneja objetos seq_data para correr los distintos pipelines
             path_arch_usado = self.path_archivos; 
         else:
             path_arch_usado = path_archivos; 
-        # Genero archivos .fasta de L_genomas
-        for genoma in L_genomas:
-            new_seq = seq_data(genoma, path_fasta=path_fasta_usado); 
-            new_seq.crear_archivos_chr(); 
+        # Genero archivos .fasta de L_genomas solo si descargar_genomas es True
+        if descargar_genomas: 
+            for genoma in L_genomas:
+                new_seq = seq_data(genoma, path_fasta=path_fasta_usado); 
+                new_seq.crear_archivos_chr(); 
         # Genero archivos de rangos de .bed con funcion
         self.generar_archivos_bed(self, L_bed, path_fasta=path_fasta_usado, path_archivos=path_arch_usado, path_bed=path_bed); 
         # Genero archivos del pipeline de promotores
