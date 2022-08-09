@@ -58,10 +58,10 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
             if self.dict_chrid[chr_n] == chr_id:
                 print('Id "' + chr_id + '" ya asociado con "' + chr_n + '".')
             else:
-                logging.warning('"' + chr_n + '" asociado con id "' + self.dict_chrid[chr_n] + '". Se reemplaza por id "' + chr_id + '".')
+                logging.warning('"' + chr_n + '" asociado con id "' + self.dict_chrid[chr_n] + '". Se reemplaza por id "' + chr_id + '".'); 
         # Si chr_n no esta en self.dict_chrid.keys(), se agrega directamente
         else:
-            self.dict_chrid[chr_n] = chr_id;
+            self.dict_chrid[chr_n] = chr_id; 
             print('Dict chrid actualizado correctamente con id "' + chr_id + '" para "' + chr_n + '".')
         return self
 
@@ -71,11 +71,11 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
 
         # Veo que chr_n este en self.dict_chrid.keys(), por las dudas
         if chr_n in self.dict_chrid.keys():
-            ret = self.dict_chrid[chr_n];
+            ret = self.dict_chrid[chr_n]; 
         # Tira error si no esta y devuelve string vacio
         else:
-            logging.error('No se pudo encontrar ' + chr_n + ' en dict_chrid. Se puede agregar manualmente con self._agregar_chrid(chr_id, chr_n).')
-            ret = '';
+            logging.error('No se pudo encontrar ' + chr_n + ' en dict_chrid. Se puede agregar manualmente con self._agregar_chrid(chr_id, chr_n).'); 
+            ret = ''; 
         return ret
 
 
@@ -143,7 +143,16 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
     def _cargar_dict_chrid(self, genome_name):
         # Inicializa self.dict_chrid para pasar de chr_n a chr_id
         # Redefine self.genome_name para estandarizar outputs
-        self.dict_chrid = {};
+        self.dict_chrid = {}; 
+        # Defino el default (para actualizar facilmente)
+        default_dict = {'chr1':'NC_000001.11', 'chr2':'NC_000002.12', 'chr3':'NC_000003.12', 'chr4':'NC_000004.12',
+                        'chr5':'NC_000005.10', 'chr6':'NC_000006.12', 'chr7':'NC_000007.14', 'chr8':'NC_000008.11',
+                        'chr9':'NC_000009.12', 'chr10':'NC_000010.11', 'chr11':'NC_000011.10', 'chr12':'NC_000012.12',
+                        'chr13':'NC_000013.11', 'chr14':'NC_000014.9', 'chr15':'NC_000015.10', 'chr16':'NC_000016.10',
+                        'chr17':'NC_000017.11', 'chr18':'NC_000018.10', 'chr19':'NC_000019.10', 'chr20':'NC_000020.11',
+                        'chr21':'NC_000021.9', 'chr22':'NC_000022.11', 'chrX':'NC_000023.11', 'chrY':'NC_000024.10',
+                        'chrM':'NC_012920.1', 'chrMT':'NC_012920.1'}; 
+        default_dict_name = 'hg19'; 
         if genome_name.lower() == 'hg19' or genome_name.lower() == 'human':
             self.dict_chrid = {'chr1':'NC_000001.11', 'chr2':'NC_000002.12', 'chr3':'NC_000003.12', 'chr4':'NC_000004.12',
                                'chr5':'NC_000005.10', 'chr6':'NC_000006.12', 'chr7':'NC_000007.14', 'chr8':'NC_000008.11',
@@ -151,34 +160,28 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
                                'chr13':'NC_000013.11', 'chr14':'NC_000014.9', 'chr15':'NC_000015.10', 'chr16':'NC_000016.10',
                                'chr17':'NC_000017.11', 'chr18':'NC_000018.10', 'chr19':'NC_000019.10', 'chr20':'NC_000020.11',
                                'chr21':'NC_000021.9', 'chr22':'NC_000022.11', 'chrX':'NC_000023.11', 'chrY':'NC_000024.10',
-                               'chrM':'NC_012920.1', 'chrMT':'NC_012920.1'};
-            self.genome_name = 'hg19';
+                               'chrM':'NC_012920.1', 'chrMT':'NC_012920.1'}; 
+            self.genome_name = 'hg19'; 
         elif genome_name.lower() == 'mm9' or genome_name.lower() == 'mouse':
             self.dict_chrid = {'chr1':'NC_000067.5', 'chr2':'NC_000068.6', 'chr3':'NC_000069.5', 'chr4':'NC_000070.5',
                                'chr5':'NC_000071.5', 'chr6':'NC_000072.5', 'chr7':'NC_000073.5', 'chr8':'NC_000074.5',
                                'chr9':'NC_000075.5', 'chr10':'NC_000076.5', 'chr11':'NC_000077.5', 'chr12':'NC_000078.5',
                                'chr13':'NC_000079.5', 'chr14':'NC_000080.5', 'chr15':'NC_000081.5', 'chr16':'NC_000082.5',
                                'chr17':'NC_000083.5', 'chr18':'NC_000084.5', 'chr19':'NC_000085.5', 'chrX':'NC_000086.6',
-                               'chrY':'NC_000087.6', 'chrM':'NC_005089.1', 'chrMT':'NC_005089.1'};
-            self.genome_name = 'mm9';
+                               'chrY':'NC_000087.6', 'chrM':'NC_005089.1', 'chrMT':'NC_005089.1'}; 
+            self.genome_name = 'mm9'; 
         elif genome_name.lower() == 'hg38':
             self.dict_chrid = {'chr1':'CM000994.3', 'chr10':'CM001003.3', 'chr11':'CM001004.3', 'chr12':'CM001005.3',
                                'chr13':'CM001006.3', 'chr14':'CM001007.3', 'chr15':'CM001008.3', 'chr16':'CM001009.3',
                                'chr17':'CM001010.3', 'chr18':'CM001011.3', 'chr19':'CM001012.3', 'chr2':'CM000995.3',
                                'chr3':'CM000996.3', 'chr4':'CM000997.3', 'chr5':'CM000998.3', 'chr6':'CM000999.3',
                                'chr7':'CM001000.3', 'chr8':'CM001001.3', 'chr9':'CM001002.3', 'chrMT':'AY172335.1',
-                               'chrX':'CM001013.3', 'chrY':'CM001014.3', 'chrM':'AY172335.1'};
-            self.genome_name = 'hg38';
+                               'chrX':'CM001013.3', 'chrY':'CM001014.3', 'chrM':'AY172335.1'}; 
+            self.genome_name = 'hg38'; 
         else:
-            logging.warning('No se encontro el genoma ' + genome_name + ', se asume genoma hg19 (Homo sapiens).');
-            self.dict_chrid = {'chr1':'NC_000001.11', 'chr2':'NC_000002.12', 'chr3':'NC_000003.12', 'chr4':'NC_000004.12',
-                               'chr5':'NC_000005.10', 'chr6':'NC_000006.12', 'chr7':'NC_000007.14', 'chr8':'NC_000008.11',
-                               'chr9':'NC_000009.12', 'chr10':'NC_000010.11', 'chr11':'NC_000011.10', 'chr12':'NC_000012.12',
-                               'chr13':'NC_000013.11', 'chr14':'NC_000014.9', 'chr15':'NC_000015.10', 'chr16':'NC_000016.10',
-                               'chr17':'NC_000017.11', 'chr18':'NC_000018.10', 'chr19':'NC_000019.10', 'chr20':'NC_000020.11',
-                               'chr21':'NC_000021.9', 'chr22':'NC_000022.11', 'chrX':'NC_000023.11', 'chrY':'NC_000024.10',
-                               'chrM':'NC_012920.1', 'chrMT':'NC_012920.1'};
-            self.genome_name = 'hg19';
+            logging.warning('No se encontro el genoma ' + genome_name + ', se asume genoma ' + default_dict_name + '.'); 
+            self.dict_chrid = default_dict; 
+            self.genome_name = default_dict_name; 
         return self
 
 
@@ -248,15 +251,15 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         # Si algo falla, devuelve False
 
         # Inicializo el booleano que se devuelve
-        ret = False;
+        ret = False; 
         # Si chr_n esta en self.dict_range.keys(), no hago nada y devuelvo True
         if chr_n in self.dict_range.keys():
-            ret = True;
+            ret = True; 
         # Si chr_n no esta en self.dict_range.keys(), reviso carpeta self.path_fasta con self._chr_file_check()
         elif self._chr_file_check(chr_n):
             # Una vez me aseguro que el archivo esta presente, agrego chr_n a self.dict_range
-            self.dict_range[chr_n] = [];
-            ret = True;
+            self.dict_range[chr_n] = []; 
+            ret = True; 
         return ret
 
 
@@ -266,24 +269,24 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         # Devuelve False si el archivo no esta presente y no se pudo descargar por una u otra razon
 
         # Defino el nombre y direccion del archivo a buscar
-        dir_arch, nom_arch = self._dir_arch(chr_n);
+        dir_arch, nom_arch = self._dir_arch(chr_n); 
         # Busco el archivo self.genome_name + '_' + chr_n + '.fasta' en self.path_fasta
         try:
             # Si esta presente, no hago nada
-            F = open(dir_arch, 'r');
-            F.close();
-            ret = True;
+            F = open(dir_arch, 'r'); 
+            F.close(); 
+            ret = True; 
         except:
-            logging.warning('Archivo ' + nom_arch + ' no encontrado en la carpeta dada.');
+            logging.warning('Archivo ' + nom_arch + ' no encontrado en la carpeta dada.'); 
             # Si chr_n no esta presente, defino chr_id en base a chr_n para descargarlo
-            chr_id = self._buscar_chrid(chr_n);
+            chr_id = self._buscar_chrid(chr_n); 
             # Si no encuentro chr_id, tiro error y devuelvo False
             if chr_id == '':
-                logging.error('Cromosoma ' + chr_n + ' no encontrado en lista de IDs para buscar en nucleotide.');
-                ret = False;
+                logging.error('Cromosoma ' + chr_n + ' no encontrado en lista de IDs para buscar en nucleotide.'); 
+                ret = False; 
             # Si encuentro chr_id, trato de bajarlo con self._download_chr()
             else:
-                ret = self._download_chr(chr_n);
+                ret = self._download_chr(chr_n); 
         return ret
 
 
@@ -432,11 +435,11 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         # Devuelve la direccion del archivo correspondiente a chr_n y el nombre del archivo
 
         # Defino el nombre del archivo a buscar
-        nom_arch = self.genome_name + '_' + chr_n + '.fasta';
+        nom_arch = self.genome_name + '_' + chr_n + '.fasta'; 
         if self.path_fasta == '':
-            dir_arch = '.\\' + nom_arch;
+            dir_arch = '.\\' + nom_arch; 
         else:
-            dir_arch = os.path.join(self.path_fasta, nom_arch);
+            dir_arch = os.path.join(self.path_fasta, nom_arch); 
         return dir_arch, nom_arch
 
 
@@ -671,7 +674,7 @@ GRCm38	        Dec 2011	        mm10
 NCBI Build 37	Jul 2007	        mm9
         '''
         # Defino el genoma default (por si lo quiero cambiar rapido)
-        default_genome = EnsemblRelease(75, species='human');
+        default_genome = EnsemblRelease(75, species='human'); 
         # Primero reviso self.genome_name por si es hg19, mm9 o hg38
         if self.genome_name.lower() in ['hg19', 'mm9', 'hg38', 'mm10']:
             # CUIDADO: En init se asume hg19 si no se da uno de estos genome_name
@@ -975,6 +978,26 @@ NCBI Build 37	Jul 2007	        mm9
             # Obtengo el complemento de cada posicion de atras para adelante y las agrego a ret_seq
             ret_seq = ret_seq + self._complemento(seq[-i-1],adn=adn);
         return ret_seq
+
+
+    def crear_archivos_chr(self, chr_n_max=23, L_extra=['X','Y','MT','M'], path_fasta=''):
+        # Revisa lista de chr_n usando self._chr_file_check(self, chr_n) para generar todos los archivos .fasta necesarios
+
+        # Lista de chr_n usados
+        L_chr_n = []; 
+        # Creo todos los chr_n entre 1 y chr_n_max
+        for i in range(1, chr_n_max+1):
+            L_chr_n.append('chr' + str(i)); 
+        # Creo los chr_n correspondientes a X, Y, MT/M (personalizables en L_extra)
+        for i in L_extra:
+            L_chr_n.append('chr' + str(i)); 
+        # Recorro cada uno de los elementos en L_chr_n
+        for chr_n in L_chr_n:
+            # Reviso si estan en el diccionario
+            if self._buscar_chrid(chr_n):
+                # Uso self._download_chr(chr_n) para descargar los .fasta
+                self._download_chr(chr_n); 
+        return self
 
 
     def genes_cerca_rangos(self, dist_max, genome_version='', organism='', usar_id=False):
@@ -1437,6 +1460,117 @@ Funciones para hacer:
         return self
 
 
+    def generar_archivos_base(self, L_rangos, L_genomas, L_bed, path_fasta='', path_archivos='.\\', path_bed='.\\'):
+        # Funcion para generar archivos de todo lo que sea necesario en relacion a seq_data
+        # path_fasta y path_archivos toman lo que se ponga en __init__ si no se da ningun valor
+
+        # Defino los path usados
+        if path_fasta == '':
+            path_fasta_usado = self.path_fasta; 
+        else:
+            path_fasta_usado = path_fasta; 
+        if path_archivos == '.\\':
+            path_arch_usado = self.path_archivos; 
+        else:
+            path_arch_usado = path_archivos; 
+        # Genero archivos .fasta de L_genomas
+        for genoma in L_genomas:
+            new_seq = seq_data(genoma, path_fasta=path_fasta_usado); 
+            new_seq.crear_archivos_chr(); 
+        # Genero archivos de rangos de .bed con funcion
+        self.generar_archivos_bed(self, L_bed, path_fasta=path_fasta_usado, path_archivos=path_arch_usado, path_bed=path_bed); 
+        # Genero archivos del pipeline de promotores
+        self.generar_archivos_promotores(self, L_rangos, L_genomas, path_fasta=path_fasta_usado, path_archivos=path_arch_usado); 
+        return self
+
+
+    def generar_archivos_bed(self, L_bed, path_fasta='', path_archivos='.\\', path_bed='.\\'):
+        # Funcion para generar archivos correspondientes a rangos de .bed
+
+        # Defino los path usados
+        if path_fasta == '':
+            path_fasta_usado = self.path_fasta; 
+        else:
+            path_fasta_usado = path_fasta; 
+        if path_archivos == '.\\':
+            path_arch_usado = self.path_archivos; 
+        else:
+            path_arch_usado = path_archivos; 
+        # Recorro L_bed
+        for bed in L_bed:
+            # Defino nombre y genoma de cada .bed en L_bed
+            bed_name = bed[0]; 
+            genoma = bed[1]; 
+            # Creo seq_data
+            bed_seq = seq_data(genoma, path_fasta=path_fasta_usado); 
+            # Cargo bed_name en path_bed
+            bed_seq.leer_bed(bed_name, path_bed=path_bed); 
+            # Guardo el archivo en path_archivos
+            bed_seq.guardar_rangos_archivo(bed_name, path_out=path_arch_usado); 
+        return self
+
+
+    def generar_archivos_promotores(self, L_rangos, L_genomas, path_fasta='', path_archivos='.\\'):
+        # Funcion para generar archivos correspondientes a rangos alrededor de promotores de una lista de genomas
+
+        # Defino los path usados
+        if path_fasta == '':
+            path_fasta_usado = self.path_fasta; 
+        else:
+            path_fasta_usado = path_fasta; 
+        if path_archivos == '.\\':
+            path_arch_usado = self.path_archivos; 
+        else:
+            path_arch_usado = path_archivos; 
+        # Recorro la lista de genomas
+        for genoma in L_genomas:
+            # Recorro la lista de rangos
+            for rango in L_rangos:
+                # Defino nom_arch en base a rango y genoma
+                if rango[0] < 0: 
+                    rango0 = 'minus' + str(rango[0]); 
+                else:
+                    rango0 = str(rango[0]); 
+                if rango[1] < 0: 
+                    rango1 = 'minus' + str(rango[1]); 
+                else:
+                    rango1 = str(rango[1]); 
+                nom_arch = 'promotores_' + str(genoma) + '_' + rango0 + '_' + rango1; 
+                # Creo seq_data
+                prom_seq = seq_data(genoma, path_fasta=path_fasta_usado); 
+                # Cargo los promotores
+                prom_seq.cargar_promotores(rango); 
+                # Guardo el archivo
+                prom_seq.guardar_rangos_archivo(nom_arch, path_out=path_arch_usado); 
+        return self
+
+
+    def generar_archivo_SU(self, L_sitios, nom_out, nom_ref, genoma, path_fasta='', path_ref='.\\', path_archivos='.\\', verbose=True, ext_ref='.csv', sep_ref=';', cargar_genes=False):
+        # Genera un archivo de nombre nom_out con sitios de union encontrados en rangos de archivo nom_ref
+
+        # Defino los path usados
+        if path_fasta == '':
+            path_fasta_usado = self.path_fasta; 
+        else:
+            path_fasta_usado = path_fasta; 
+        if path_archivos == '.\\':
+            path_arch_usado = self.path_archivos; 
+        else:
+            path_arch_usado = path_archivos; 
+        # Creo seq_data de referencia
+        seq_ref = seq_data(genoma, path_fasta=path_fasta_usado); 
+        # Cargo rangos de nom_ref en path_ref
+        seq_ref.cargar_rangos_archivo(nom_ref, ext=ext_ref, cargar_genes=cargar_genes, path_in=path_ref, sep=sep_ref); 
+        # Seteo verbose
+        seq_ref._set_verbose('buscar_sitios_union_lista', verbose); 
+        # Creo seq_data con sitios de union
+        seq_sitios = seq_ref.buscar_sitios_union_lista(L_sitios, genes_cercanos=cargar_genes); 
+        # Guardo los rangos de seq_sitios en nom_out, en carpeta path_arch_usado
+        seq_sitios.guardar_rangos_archivo(nom_out, path_out=path_arch_usado); 
+
+        return self
+
+
 
 #################################### FUNCIONES ####################################
 
@@ -1452,20 +1586,18 @@ def _main_test():
     Entrez.api_key = '9bccbd4949f226a5930868df36c211e8b408'; 
 
     # Defino genoma de raton mm9
-    mm9 = EnsemblRelease(67, species='mouse'); 
+    mm9 = EnsemblRelease(54, species='mouse'); 
 
     # Listas de genes confirmados usada
     L_name_confirmados = ['Nppa', 'Hopx', 'Adora1', 'Slc8a1', 'Mov10l1', 'Gja5', 'Myocd', 'Calr', 'Ece1', 'Gata6', 'Mef2c', 'Pitx2']; 
     L_id_confirmados = ['ENSMUSG00000041616', 'ENSMUSG00000059325', 'ENSMUSG00000042429', 'ENSMUSG00000054640', 'ENSMUSG00000015365', 'ENSMUSG00000057123', 
 		                'ENSMUSG00000020542', 'ENSMUSG00000003814', 'ENSMUSG00000057530', 'ENSMUSG00000005836', 'ENSMUSG00000005583', 'ENSMUSG00000028023']; 
-
     '''for i in range(len(L_name_confirmados)):
         print('L_name_confirmados[i]: ' + str(L_name_confirmados[i]))
         print('L_id_confirmados[i]: ' + str(L_id_confirmados[i]))
         print('genes_by_name: ' + str(mm9.genes_by_name(L_name_confirmados[i])))
         print('gene_by_id: ' + str(mm9.gene_by_id(L_id_confirmados[i])))
         print()'''
-    
 
     # Defino la direccion del .fasta
     path_usado = 'D:\\Archivos doctorado\\Genomas\\'; # PC casa
@@ -1676,6 +1808,14 @@ def _main_test():
     #superposicion_test.guardar_rangos_archivo('superposicion_test_range', guardar_genes=False, path_out=path_out); 
     #superposicion_test.guardar_rangos_archivo('superposicion_test_genes', guardar_genes=True, path_out=path_out); '''
 
+    #L_out = bed_test; 
+    return L_out
+
+
+def _main_test_old():
+    # 
+    L_out = []; 
+
     '''#print('>base_test inicializado. Inicializando revision de sitios de union en el genoma.')
     #base_test.cargar_promotores([-1500, 1500]); 
     #print('>Carga de promotores finalizada. Mostrando dict_range.')
@@ -1751,9 +1891,7 @@ def _main_test():
     #print('>Rango cargado en chr2. Devolviendo dict_range en base_test.')
     #print(base_test.dict_range)'''
 
-    #L_out = bed_test; 
     return L_out
-
 
 
 ###################################################################################
