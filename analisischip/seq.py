@@ -980,9 +980,11 @@ NCBI Build 37	Jul 2007	        mm9
         return ret_seq
 
 
-    def crear_archivos_chr(self, chr_n_max=23, L_extra=['X','Y','MT','M'], path_fasta=''):
+    def crear_archivos_chr(self, chr_n_max=23, L_extra=['X','Y','MT','M']):
         # Revisa lista de chr_n usando self._chr_file_check(self, chr_n) para generar todos los archivos .fasta necesarios
 
+        # Defino verbose
+        verbose = self._check_verbose('crear_archivos_chr'); 
         # Lista de chr_n usados
         L_chr_n = []; 
         # Creo todos los chr_n entre 1 y chr_n_max
@@ -991,12 +993,19 @@ NCBI Build 37	Jul 2007	        mm9
         # Creo los chr_n correspondientes a X, Y, MT/M (personalizables en L_extra)
         for i in L_extra:
             L_chr_n.append('chr' + str(i)); 
+        # Display
+        if verbose:
+            print('# Lista de chr_n buscados: ' + str(L_chr_n))
         # Recorro cada uno de los elementos en L_chr_n
         for chr_n in L_chr_n:
+            if verbose:
+                print('>Iniciando descarga de ' + chr_n)
             # Reviso si estan en el diccionario
             if self._buscar_chrid(chr_n):
                 # Uso self._download_chr(chr_n) para descargar los .fasta
                 self._download_chr(chr_n); 
+            elif verbose:
+                print('chr_n "' + chr_n + '" no encontrado.')
         return self
 
 
