@@ -1479,7 +1479,12 @@ Clase que crea y maneja objetos seq_data para correr los distintos pipelines
         # Genero archivos .fasta de L_genomas solo si descargar_genomas es True
         if descargar_genomas: 
             for genoma in L_genomas:
+                print('### Iniciando descarga de genoma ' + genoma)
+                # Creo elemento seq_data
                 new_seq = seq_data(genoma, path_fasta=path_fasta_usado); 
+                # Defino verbose=True
+                new_seq._set_verbose('crear_archivos_chr', True); 
+                # Uso funcion crear_archivos_chr() para descargar .fasta del genoma
                 new_seq.crear_archivos_chr(); 
         # Genero archivos de rangos de .bed con funcion
         self.generar_archivos_bed(self, L_bed, path_fasta=path_fasta_usado, path_archivos=path_arch_usado, path_bed=path_bed); 
