@@ -145,21 +145,21 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         # Redefine self.genome_name para estandarizar outputs
         self.dict_chrid = {}; 
         # Defino el default (para actualizar facilmente)
-        default_dict = {'chr1':'NC_000001.11', 'chr2':'NC_000002.12', 'chr3':'NC_000003.12', 'chr4':'NC_000004.12',
-                        'chr5':'NC_000005.10', 'chr6':'NC_000006.12', 'chr7':'NC_000007.14', 'chr8':'NC_000008.11',
-                        'chr9':'NC_000009.12', 'chr10':'NC_000010.11', 'chr11':'NC_000011.10', 'chr12':'NC_000012.12',
-                        'chr13':'NC_000013.11', 'chr14':'NC_000014.9', 'chr15':'NC_000015.10', 'chr16':'NC_000016.10',
-                        'chr17':'NC_000017.11', 'chr18':'NC_000018.10', 'chr19':'NC_000019.10', 'chr20':'NC_000020.11',
-                        'chr21':'NC_000021.9', 'chr22':'NC_000022.11', 'chrX':'NC_000023.11', 'chrY':'NC_000024.10',
+        default_dict = {'chr1':'NC_000001.10', 'chr2':'NC_000002.11', 'chr3':'NC_000003.11', 'chr4':'NC_000004.11',
+                        'chr5':'NC_000005.9', 'chr6':'NC_000006.11', 'chr7':'NC_000007.13', 'chr8':'NC_000008.10',
+                        'chr9':'NC_000009.11', 'chr10':'NC_000010.10', 'chr11':'NC_000011.9', 'chr12':'NC_000012.11',
+                        'chr13':'NC_000013.10', 'chr14':'NC_000014.8', 'chr15':'NC_000015.9', 'chr16':'NC_000016.9',
+                        'chr17':'NC_000017.10', 'chr18':'NC_000018.9', 'chr19':'NC_000019.9', 'chr20':'NC_000020.10',
+                        'chr21':'NC_000021.8', 'chr22':'NC_000022.10', 'chrX':'NC_000023.10', 'chrY':'NC_000024.9',
                         'chrM':'NC_012920.1', 'chrMT':'NC_012920.1'}; 
         default_dict_name = 'hg19'; 
         if genome_name.lower() == 'hg19' or genome_name.lower() == 'human':
-            self.dict_chrid = {'chr1':'NC_000001.11', 'chr2':'NC_000002.12', 'chr3':'NC_000003.12', 'chr4':'NC_000004.12',
-                               'chr5':'NC_000005.10', 'chr6':'NC_000006.12', 'chr7':'NC_000007.14', 'chr8':'NC_000008.11',
-                               'chr9':'NC_000009.12', 'chr10':'NC_000010.11', 'chr11':'NC_000011.10', 'chr12':'NC_000012.12',
-                               'chr13':'NC_000013.11', 'chr14':'NC_000014.9', 'chr15':'NC_000015.10', 'chr16':'NC_000016.10',
-                               'chr17':'NC_000017.11', 'chr18':'NC_000018.10', 'chr19':'NC_000019.10', 'chr20':'NC_000020.11',
-                               'chr21':'NC_000021.9', 'chr22':'NC_000022.11', 'chrX':'NC_000023.11', 'chrY':'NC_000024.10',
+            self.dict_chrid = {'chr1':'NC_000001.10', 'chr2':'NC_000002.11', 'chr3':'NC_000003.11', 'chr4':'NC_000004.11',
+                               'chr5':'NC_000005.9', 'chr6':'NC_000006.11', 'chr7':'NC_000007.13', 'chr8':'NC_000008.10',
+                               'chr9':'NC_000009.11', 'chr10':'NC_000010.10', 'chr11':'NC_000011.9', 'chr12':'NC_000012.11',
+                               'chr13':'NC_000013.10', 'chr14':'NC_000014.8', 'chr15':'NC_000015.9', 'chr16':'NC_000016.9',
+                               'chr17':'NC_000017.10', 'chr18':'NC_000018.9', 'chr19':'NC_000019.9', 'chr20':'NC_000020.10',
+                               'chr21':'NC_000021.8', 'chr22':'NC_000022.10', 'chrX':'NC_000023.10', 'chrY':'NC_000024.9',
                                'chrM':'NC_012920.1', 'chrMT':'NC_012920.1'}; 
             self.genome_name = 'hg19'; 
         elif genome_name.lower() == 'mm9' or genome_name.lower() == 'mouse':
@@ -171,12 +171,21 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
                                'chrY':'NC_000087.6', 'chrM':'NC_005089.1', 'chrMT':'NC_005089.1'}; 
             self.genome_name = 'mm9'; 
         elif genome_name.lower() == 'hg38':
-            self.dict_chrid = {'chr1':'CM000994.3', 'chr10':'CM001003.3', 'chr11':'CM001004.3', 'chr12':'CM001005.3',
-                               'chr13':'CM001006.3', 'chr14':'CM001007.3', 'chr15':'CM001008.3', 'chr16':'CM001009.3',
-                               'chr17':'CM001010.3', 'chr18':'CM001011.3', 'chr19':'CM001012.3', 'chr2':'CM000995.3',
-                               'chr3':'CM000996.3', 'chr4':'CM000997.3', 'chr5':'CM000998.3', 'chr6':'CM000999.3',
-                               'chr7':'CM001000.3', 'chr8':'CM001001.3', 'chr9':'CM001002.3', 'chrMT':'AY172335.1',
-                               'chrX':'CM001013.3', 'chrY':'CM001014.3', 'chrM':'AY172335.1'}; 
+            self.dict_chrid = {'chr1':'NC_000001.11', 'chr10':'NC_000010.11', 'chr11':'NC_000011.10', 'chr12':'	NC_000012.12',
+                               'chr13':'NC_000013.11', 'chr14':'NC_000014.9', 'chr15':'NC_000015.10', 'chr16':'NC_000016.10',
+                               'chr17':'NC_000017.11', 'chr18':'NC_000018.10', 'chr19':'NC_000019.10', 'chr2':'NC_000002.12',
+                               'chr20':'NC_000020.11', 'chr21':'NC_000021.9', 'chr22':'NC_000022.11', 'chr3':'NC_000003.12',
+                               'chr4':'NC_000004.12', 'chr5':'NC_000005.10', 'chr6':'NC_000006.12', 'chr7':'NC_000007.14',
+                               'chr8':'NC_000008.11', 'chr9':'NC_000009.12', 'chrX':'NC_000023.11', 'chrY':'NC_000024.10', 
+                               'chrMT':'NC_012920.1', 'chrM':'NC_012920.1'}; 
+            self.genome_name = 'hg38'; 
+        elif genome_name.lower() == 'mm10': 
+            self.dict_chrid = {'chr1':'NC_000067.6', 'chr10':'NC_000076.6', 'chr11':'NC_000077.6', 'chr12':'NC_000078.6',
+                               'chr13':'NC_000079.6', 'chr14':'NC_000080.6', 'chr15':'NC_000081.6', 'chr16':'NC_000082.6',
+                               'chr17':'NC_000083.6', 'chr18':'NC_000084.6', 'chr19':'NC_000085.6', 'chr2':'NC_000068.7',
+                               'chr3':'NC_000069.6', 'chr4':'NC_000070.6', 'chr5':'NC_000071.6', 'chr6':'NC_000072.6',
+                               'chr7':'NC_000073.6', 'chr8':'NC_000074.6', 'chr9':'NC_000075.6', 
+                               'chrX':'	NC_000086.7', 'chrY':'NC_000087.7', 'chrMT':'NC_005089.1', 'chrM':'NC_005089.1'}; 
             self.genome_name = 'hg38'; 
         else:
             logging.warning('No se encontro el genoma ' + genome_name + ', se asume genoma ' + default_dict_name + '.'); 
