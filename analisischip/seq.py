@@ -911,6 +911,7 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         # Carga todos los rangos del genoma a self.dict_range
         # Registra entre rango_promotor[0] y rango_promotor[1] a partir del +1 de cada gen
         # Usa cargar_rango() con los rangos obtenidos y chequea que el genoma este cargado con _obtener_genoma()
+        ### Se puede agregar booleano para usar gen completo, y se cambia pos0-/+rango_promotor[1] por gene_end
 
         # Defino verbose
         verbose = self._check_verbose('cargar_promotores'); 
@@ -925,7 +926,7 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
             # Solo agarro protein_coding
             if gene_object.biotype == 'protein_coding':
                 # Defino pos0 del gen y booleano forward en base a strand y pos_ini/pos_end
-                pos0, forward = self._obtener_pos0_forward(gene_object.start, gene_object.end, gene_object.strand); 
+                pos0, forward, gene_end = self._obtener_pos0_forward_end(gene_object.start, gene_object.end, gene_object.strand); 
                 # Defino chr_n en base a contig
                 chr_n = self._obtener_chr(gene_object.contig); 
                 # Solo cargo el rango si chr_n se pudo procesar (si no se puede, devuelve string vacio)
