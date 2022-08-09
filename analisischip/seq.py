@@ -659,40 +659,53 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         # Asigna un elemento genoma de Ensembl a self.genome
         # Si self.genome_name no es hg19, mm9 ni hg38, intenta buscar usando EnsemblRelease(genome_version, species=organism)
 
+        '''
+HUMAN
+Release name	Date of release	    Equivalent UCSC version
+GRCh38	        Dec 2013	        hg38
+GRCh37	        Feb 2009	        hg19
+MOUSE
+Release name	Date of release	    Equivalent UCSC version
+GRCm39	        June 2020	        mm39
+GRCm38	        Dec 2011	        mm10
+NCBI Build 37	Jul 2007	        mm9
+        '''
         # Defino el genoma default (por si lo quiero cambiar rapido)
-        default_genome = EnsemblRelease(102, species='human');
+        default_genome = EnsemblRelease(75, species='human');
         # Primero reviso self.genome_name por si es hg19, mm9 o hg38
-        if self.genome_name.lower() in ['hg19', 'mm9', 'hg38']:
+        if self.genome_name.lower() in ['hg19', 'mm9', 'hg38', 'mm10']:
             # CUIDADO: En init se asume hg19 si no se da uno de estos genome_name
             # Para seguir hay que cambiar init o cambiar manualmente self.genome_name
             if self.genome_name.lower() == 'hg19':
-                self.genome = EnsemblRelease(102, species='human');
-            elif self.genome_name.lower() == 'mm9':
-                self.genome = EnsemblRelease(67, species='mouse');
+                self.genome = EnsemblRelease(75, species='human'); 
             elif self.genome_name.lower() == 'hg38':
-                self.genome = EnsemblRelease(102, species='mouse');
+                self.genome = EnsemblRelease(107, species='human'); 
+            elif self.genome_name.lower() == 'mm9':
+                self.genome = EnsemblRelease(54, species='mouse'); 
+            elif self.genome_name.lower() == 'mm10':
+                self.genome = EnsemblRelease(102, species='mouse'); 
             else:
                 # Esto no deberia pasar
                 logging.error('self.genome_name no esta en la lista seleccionada. Se utiliza el genoma por defecto.');
-                self.genome = default_genome;
+                self.genome = default_genome; 
         # Si self.genome no esta cargado y self.genome_name no es hg19, mm9 ni hg38, veo si genome_version o organism tienen info
         elif genome_version != '' or organism != '':
             # Si hay genome_version o organism cargados, veo si ambos estan cargados
             if genome_version != '' and organism != '':
                 # Pruebo correr y si falla uso default_genome
                 try:
-                    self.genome = EnsemblRelease(int(genome_version), species=organism);
+                    self.genome = EnsemblRelease(int(genome_version), species=organism); 
                 except:
-                    logging.error('Falla busqueda de genoma species=' + str(organism)  + '; version=' + str(genome_version) + '. Se utiliza el genoma por defecto.')
-                    self.genome = default_genome;
+                    logging.error('Falla busqueda de genoma species=' + str(organism)  + '; version=' + str(genome_version) + '. Se utiliza el genoma por defecto.'); 
+                    self.genome = default_genome; 
             # Si ninguno esta cargado, tiro error y uso default_genome
             else:
-                logging.error('Completar genome_version y organism para buscar en EnsemblRelease. Se utiliza el genoma por defecto.');
-                self.genome = default_genome;
+                logging.error('Completar genome_version y organism para buscar en EnsemblRelease. Se utiliza el genoma por defecto.'); 
+                self.genome = default_genome; 
         else:
             # Si no hay ningun dato, directamente se asume default_genome
-            logging.warning('Sin informacion de genoma. Se utiliza el genoma por defecto.');
-            self.genome = default_genome;
+            logging.warning('Sin informacion de genoma. Se utiliza el genoma por defecto.'); 
+            self.genome = default_genome; 
         return self
 
 
