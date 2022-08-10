@@ -1496,9 +1496,9 @@ Clase que crea y maneja objetos seq_data para correr los distintos pipelines
                 # Uso funcion crear_archivos_chr() para descargar .fasta del genoma
                 new_seq.crear_archivos_chr(); 
         # Genero archivos de rangos de .bed con funcion
-        self.generar_archivos_bed(self, L_bed, path_fasta=path_fasta_usado, path_archivos=path_arch_usado, path_bed=path_bed); 
+        self.generar_archivos_bed(L_bed, path_fasta=path_fasta_usado, path_archivos=path_arch_usado, path_bed=path_bed); 
         # Genero archivos del pipeline de promotores
-        self.generar_archivos_promotores(self, L_rangos, L_genomas, path_fasta=path_fasta_usado, path_archivos=path_arch_usado); 
+        self.generar_archivos_promotores(L_rangos, L_genomas, path_fasta=path_fasta_usado, path_archivos=path_arch_usado); 
         return self
 
 
