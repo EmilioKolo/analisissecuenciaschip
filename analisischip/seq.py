@@ -1643,6 +1643,14 @@ def _main_test():
         # Funcion para cargar rangos_promotores de lista de genes
     ###
 
+    #L_out = bed_test; 
+    return L_out
+
+
+def _main_test_old():
+    # 
+    L_out = []; 
+
     '''print('>base_test inicializado. Cargando bed_dupays.')
     bed_test = base_test.clonar(); 
     bed_test.cargar_rangos_archivo('bed_dupays', path_in=path_out); 
@@ -1825,14 +1833,6 @@ def _main_test():
     #print('* Guardando superposicion_test en ' + str(path_out))
     #superposicion_test.guardar_rangos_archivo('superposicion_test_range', guardar_genes=False, path_out=path_out); 
     #superposicion_test.guardar_rangos_archivo('superposicion_test_genes', guardar_genes=True, path_out=path_out); '''
-
-    #L_out = bed_test; 
-    return L_out
-
-
-def _main_test_old():
-    # 
-    L_out = []; 
 
     '''#print('>base_test inicializado. Inicializando revision de sitios de union en el genoma.')
     #base_test.cargar_promotores([-1500, 1500]); 
