@@ -1,5 +1,7 @@
 # Generales
+from email import header
 import os
+from syslog import LOG_UPTO
 import time
 import logging
 # Analisis de secuencias y genomas
@@ -1314,6 +1316,40 @@ NCBI Build 37	Jul 2007	        mm9
             # Si hay sitios de union dados, se inicializa otro objeto para devolver
             seq_out = self.buscar_sitios_union_lista(L_sitios, genes_cercanos=True); 
         return seq_out
+
+
+    def secuencias_rangos_fasta(self, nom_out, path_out='.\\', genes_cercanos=False):
+        # Devuelve los rangos de self.dict_range como secuencias en formato fasta
+        # Si genes_cercanos es True, devuelve rangos de self.genes_cercanos en vez de self.dict_range
+
+        # Inicializo la lista que se devuelve
+        L_out = []; 
+        # Abro archivo nom_out para borrarlo si ya existe
+        # Creo el archivo nombre_out+ext en path_out
+        with open(str(path_out) + str(nom_out) + '.fasta', 'w') as F_out:
+            print('Archivo ' + str(nom_out) + '.fasta creado.')
+        # Vuelvo a abrir el archivo en modo append
+        with open(str(path_out) + str(nom_out) + '.fasta', 'a') as F_out:
+            # Recorro dict_range o genes_cercanos
+            if genes_cercanos:
+                for chr_n in self.genes_cercanos.keys():
+                    # Defino L_genes en chr_n
+                    L_genes_cercanos = self.genes_cercanos[chr_n]; 
+                    # Recorro cada elemento gen con lista de rangos en L_genes_cercanos
+                    for gen_cercano in L_genes_cercanos:
+                        curr_gen = gen_cercano[0]; 
+                        L_rangos = gen_cercano[1]; 
+                        # Recorro L_rangos cerca de curr_gen
+                        for curr_rango in L_rangos:
+                            # Defino header fasta
+                            header_fasta = '>' + chr_n + ', ' + str(curr_rango[0]) + '-' + str(curr_rango[1])  + ', near ' + str(curr_gen); 
+                            # Defino la secuencia correspondiente
+                            curr_seq = str(self._consulta_secuencia_fasta(chr_n, curr_rango[0], curr_rango[1])); 
+                            # Guardo todo en archivo y en L_out
+                            F_out.write(header_fasta + '\n'); 
+                            F_out.write(curr_seq + '\n'); 
+                            L_out.append([str(header_fasta), str(curr_seq)]); 
+        return L_out
 
 
     def superposicion_sitios(self, seq_data_comparada):
