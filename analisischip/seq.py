@@ -1472,6 +1472,34 @@ Clase que crea y maneja objetos seq_data para correr los distintos pipelines
         return self
 
 
+    def generar_archivo_SU(self, L_sitios, nom_out, nom_ref, genome_name, path_fasta='', path_ref='.\\', path_archivos='.\\', verbose=True, ext_ref='.csv', sep_ref=';', cargar_genes=False):
+        # Genera un archivo de nombre nom_out con sitios de union encontrados en rangos de archivo nom_ref
+        # Archivo de referencia nom_ref en path_ref
+        # Se guarda archivo con sitios de union en nom_out
+
+        # Defino los path usados
+        if path_fasta == '':
+            path_fasta_usado = self.path_fasta; 
+        else:
+            path_fasta_usado = path_fasta; 
+        if path_archivos == '.\\':
+            path_arch_usado = self.path_archivos; 
+        else:
+            path_arch_usado = path_archivos; 
+        # Creo seq_data de referencia
+        seq_ref = seq_data(genome_name, path_fasta=path_fasta_usado); 
+        # Cargo rangos de nom_ref en path_ref
+        seq_ref.cargar_rangos_archivo(nom_ref, ext=ext_ref, cargar_genes=cargar_genes, path_in=path_ref, sep=sep_ref); 
+        # Seteo verbose
+        seq_ref._set_verbose('buscar_sitios_union_lista', verbose); 
+        # Creo seq_data con sitios de union
+        seq_sitios = seq_ref.buscar_sitios_union_lista(L_sitios, genes_cercanos=cargar_genes); 
+        # Guardo los rangos de seq_sitios en nom_out, en carpeta path_arch_usado
+        seq_sitios.guardar_rangos_archivo(nom_out, path_out=path_arch_usado); 
+
+        return self
+
+
     def generar_archivos_base(self, L_rangos, L_genomas, L_bed, descargar_genomas=False, path_fasta='', path_archivos='.\\', path_bed='.\\'):
         # Funcion para generar archivos de todo lo que sea necesario en relacion a seq_data
         # path_fasta y path_archivos toman lo que se ponga en __init__ si no se da ningun valor
@@ -1546,11 +1574,11 @@ Clase que crea y maneja objetos seq_data para correr los distintos pipelines
             for rango in L_rangos:
                 # Defino nom_arch en base a rango y genoma
                 if rango[0] < 0: 
-                    rango0 = 'minus' + str(rango[0]); 
+                    rango0 = 'minus' + str(abs(rango[0])); 
                 else:
                     rango0 = str(rango[0]); 
                 if rango[1] < 0: 
-                    rango1 = 'minus' + str(rango[1]); 
+                    rango1 = 'minus' + str(abs(rango[1])); 
                 else:
                     rango1 = str(rango[1]); 
                 nom_arch = 'promotores_' + str(genoma) + '_' + rango0 + '_' + rango1; 
@@ -1563,29 +1591,42 @@ Clase que crea y maneja objetos seq_data para correr los distintos pipelines
         return self
 
 
-    def generar_archivo_SU(self, L_sitios, nom_out, nom_ref, genoma, path_fasta='', path_ref='.\\', path_archivos='.\\', verbose=True, ext_ref='.csv', sep_ref=';', cargar_genes=False):
-        # Genera un archivo de nombre nom_out con sitios de union encontrados en rangos de archivo nom_ref
+    def generar_archivos_SU_L_promotores(self, L_sitios, nom_out, L_rangos, L_genomas, path_fasta='', path_ref='.\\', path_out='.\\', ext_ref='.csv', sep_ref=';', verbose=True):
+        # Genera lista de archivos usando generar_archivo_SU()
+        # nom_ref se define con L_rangos y L_genomas
 
         # Defino los path usados
         if path_fasta == '':
             path_fasta_usado = self.path_fasta; 
         else:
             path_fasta_usado = path_fasta; 
-        if path_archivos == '.\\':
-            path_arch_usado = self.path_archivos; 
+        if path_out == '.\\':
+            path_out_usado = self.path_archivos; 
         else:
-            path_arch_usado = path_archivos; 
-        # Creo seq_data de referencia
-        seq_ref = seq_data(genoma, path_fasta=path_fasta_usado); 
-        # Cargo rangos de nom_ref en path_ref
-        seq_ref.cargar_rangos_archivo(nom_ref, ext=ext_ref, cargar_genes=cargar_genes, path_in=path_ref, sep=sep_ref); 
-        # Seteo verbose
-        seq_ref._set_verbose('buscar_sitios_union_lista', verbose); 
-        # Creo seq_data con sitios de union
-        seq_sitios = seq_ref.buscar_sitios_union_lista(L_sitios, genes_cercanos=cargar_genes); 
-        # Guardo los rangos de seq_sitios en nom_out, en carpeta path_arch_usado
-        seq_sitios.guardar_rangos_archivo(nom_out, path_out=path_arch_usado); 
-
+            path_out_usado = path_out; 
+        # Recorro L_genomas
+        for genome_name in L_genomas:
+            # Recorro L_rangos
+            for rango in L_rangos:
+                if verbose:
+                    print('# Iniciando revision de genoma ' + genome_name + ' para rango ' + str(rango))
+                # Defino nom_ref en base a rango y genoma
+                if rango[0] < 0: 
+                    rango0 = 'minus' + str(abs(rango[0])); 
+                else:
+                    rango0 = str(rango[0]); 
+                if rango[1] < 0: 
+                    rango1 = 'minus' + str(abs(rango[1])); 
+                else:
+                    rango1 = str(rango[1]); 
+                nom_ref = 'promotores_' + str(genome_name) + '_' + rango0 + '_' + rango1; 
+                # Defino nom_out_usado
+                nom_out_usado = 'sitios' + str(nom_out) + '_' + str(genome_name) + '_' + rango0 + '_' + rango1; 
+                # Uso generar_archivo_SU con los datos dados para correr todo
+                self.generar_archivo_SU(L_sitios, nom_out_usado, nom_ref, genome_name, path_fasta=path_fasta_usado, path_ref=path_ref, 
+                                        path_archivos=path_out_usado, verbose=verbose, ext_ref=ext_ref, sep_ref=sep_ref, cargar_genes=True); 
+                if verbose:
+                    print()
         return self
 
 
@@ -1634,6 +1675,30 @@ def _main_test():
     bed_test = base_test.clonar(); 
     bed_test.cargar_rangos_archivo('bed_dupays', path_in=path_out); 
     print('>bed_dupays cargado. Buscando distancia de L_genes a los rangos.')
+
+    # Inicializo seq_handler
+    handle = seq_handler('hg19', path_fasta=path_usado, path_archivos=path_out); 
+    # Variables a usar para handler
+    # Archivos bed con genomas correspondientes
+    bed_dupays = ['Dupays2015', 'mm9']; 
+    bed_anderson = ['Anderson2018-GSE89457consensus', 'hg19']; 
+    L_bed = [bed_dupays, bed_anderson]; 
+    # Genomas usados para promotores
+    L_genomas_promotores = ['mm9', 'hg19']; 
+    # Rangos usados para promotores
+    L_rangos = [(-1500,1500), (-10000,10000), (-50000,50000)]; 
+    # Defino sitios de union y nombres
+    L_SU_AAGTG = ['AAGTG']; 
+    nom_out_AAGTG = 'AAGTG'; 
+    L_SU_papers = []; 
+    nom_out_papers = 'papers'; 
+    # Genero los archivos de sitios de union
+    print('### Iniciando busqueda de sitios AAGTG')
+    handle.generar_archivos_SU_L_promotores(L_SU_AAGTG,nom_out_AAGTG,L_rangos,L_genomas_promotores,path_fasta=path_usado,path_ref=path_out,path_out=path_out); 
+    print()
+    print('### Iniciando busqueda de sitios confirmados en papers')
+    handle.generar_archivos_SU_L_promotores(L_SU_papers,nom_out_papers,L_rangos,L_genomas_promotores,path_fasta=path_usado,path_ref=path_out,path_out=path_out); 
+
     ### FALTA:
     # Buscar lista de genes en superposicion_rango
         # Funcion para buscar genes en seq_data.genes_cercanos
@@ -1642,7 +1707,6 @@ def _main_test():
 	# Sitios de union de NKX2-5 en promotores de lista de genes
         # Funcion para cargar rangos_promotores de lista de genes
     ###
-
     #L_out = bed_test; 
     return L_out
 
