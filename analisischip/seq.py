@@ -1587,7 +1587,7 @@ Clase que crea y maneja objetos seq_data para correr los distintos pipelines
                 # Cargo los promotores
                 prom_seq.cargar_promotores(rango); 
                 # Guardo el archivo
-                prom_seq.guardar_rangos_archivo(nom_arch, path_out=path_arch_usado); 
+                prom_seq.guardar_rangos_archivo(nom_arch, guardar_genes=True, path_out=path_arch_usado); 
         return self
 
 
