@@ -1332,6 +1332,7 @@ NCBI Build 37	Jul 2007	        mm9
         with open(str(path_out) + str(nom_out) + '.fasta', 'a') as F_out:
             # Recorro dict_range o genes_cercanos
             if genes_cercanos:
+                # Recorro genes_cercanos
                 for chr_n in self.genes_cercanos.keys():
                     # Defino L_genes en chr_n
                     L_genes_cercanos = self.genes_cercanos[chr_n]; 
@@ -1349,6 +1350,21 @@ NCBI Build 37	Jul 2007	        mm9
                             F_out.write(header_fasta + '\n'); 
                             F_out.write(curr_seq + '\n'); 
                             L_out.append([str(header_fasta), str(curr_seq)]); 
+            else:
+                # Recorro dict_range
+                for chr_n in self.dict_range.keys():
+                    # Defino L_rangos en chr_n
+                    L_rangos = self.dict_range[chr_n]; 
+                    # Recorro L_rangos
+                    for curr_rango in L_rangos:
+                        # Defino header fasta
+                        header_fasta = '>' + chr_n + ', ' + str(curr_rango[0]) + '-' + str(curr_rango[1]); 
+                        # Defino la secuencia correspondiente
+                        curr_seq = str(self._consulta_secuencia_fasta(chr_n, curr_rango[0], curr_rango[1])); 
+                        # Guardo todo en archivo y en L_out
+                        F_out.write(header_fasta + '\n'); 
+                        F_out.write(curr_seq + '\n'); 
+                        L_out.append([str(header_fasta), str(curr_seq)]); 
         return L_out
 
 
