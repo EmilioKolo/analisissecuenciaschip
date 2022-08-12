@@ -1673,7 +1673,7 @@ def _main_test():
 
     print('>base_test inicializado. Cargando bed_dupays.')
     bed_test = base_test.clonar(); 
-    bed_test.cargar_rangos_archivo('bed_dupays', path_in=path_out); 
+    bed_test.cargar_rangos_archivo('Dupays2015', path_in=path_out); 
     print('>bed_dupays cargado. Buscando distancia de L_genes a los rangos.')
 
     # Inicializo seq_handler
