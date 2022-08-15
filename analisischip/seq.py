@@ -1,7 +1,5 @@
 # Generales
-from email import header
 import os
-from syslog import LOG_UPTO
 import time
 import logging
 # Analisis de secuencias y genomas
