@@ -1749,9 +1749,7 @@ def _main_test():
     print('### Iniciando busqueda de sitios confirmados en papers')
     handle.generar_archivos_SU_L_promotores(L_SU_papers,nom_out_papers,L_rangos,L_genomas_promotores,path_fasta=path_usado,path_ref=path_out,path_out=path_out); 
 
-    ### FALTA:
-    # Buscar lista de genes en superposicion_rango
-        # Funcion para buscar genes en seq_data.genes_cercanos
+    ### FALTA (no prioritario):
     # Distancia a picos ChIP-seq de lista de genes
         # Funcion para buscar distancia de rango/punto a rangos de seq_data
 	# Sitios de union de NKX2-5 en promotores de lista de genes
