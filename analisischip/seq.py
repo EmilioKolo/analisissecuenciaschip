@@ -764,6 +764,24 @@ NCBI Build 37	Jul 2007	        mm9
         return start, forward, end
 
 
+    def _rango_largo_definido(self, pos_ini, pos_end, largo_out):
+        # Devuelve un rango de largo definido alrededor o dentro de pos_ini, pos_end
+        # Si largo es mayor que pos_end-pos_ini, se agrega tamaño a ambos lados
+        # Si largo es menor que pos_end-pos_ini, se agarra un rango alrededor del punto medio de pos_ini y pos_end
+
+        # Inicializo el rango que se devuelve
+        rango_out = []; 
+        # Defino el largo del rango dado
+        largo_in = pos_end-pos_ini+1; 
+        # Calculo la diferencia entre largo_in y largo_out
+        diff = largo_out - largo_in; 
+        # Defino pos_ini_out y pos_end_out en base a pos_ini, pos_end y diff
+        pos_ini_out = pos_ini - int(diff/2); 
+        pos_end_out = pos_end + (int(diff/2) + 1); 
+        rango_out = [pos_ini_out, pos_end_out]; 
+        return rango_out
+
+
     def _reset(self):
         # Reinicia la funcion, borrando los rangos cargados e informacion acoplada
         self.dict_range = {};
@@ -1316,6 +1334,75 @@ NCBI Build 37	Jul 2007	        mm9
         return seq_out
 
 
+    def rangos_cerca_gen(self, dist):
+        # Selecciona los rangos en self.dict_range que esten a distancia dist de un gen en self.genome
+        # Devuelve un elemento seq_data con los rangos seleccionados
+
+        # Inicializo el elemento seq_data que se devuelve
+        seq_out = self.clonar(); 
+        # Chequeo si self.genome esta cargado
+        if self.genome == '':
+            # Si no esta cargado, uso self._obtener_genoma() para cargarlo
+            self._obtener_genoma(); 
+        ### FALTA:
+        # Recorrer self.dict_range
+        # Buscar genes alrededor de cada rango
+        # Devolver los rangos con genes cerca
+        ###
+        return seq_out
+
+
+    def rangos_cerca_L_genes(self, L_genes, dist):
+        # Selecciona los rangos en self.dict_range que esten a distancia dist de un gen en L_genes
+        # Devuelve un elemento seq_data con los rangos seleccionados
+
+        # Inicializo el elemento seq_data que se devuelve
+        seq_out = self.clonar(); 
+        # Chequeo si self.genome esta cargado
+        if self.genome == '':
+            # Si no esta cargado, uso self._obtener_genoma() para cargarlo
+            self._obtener_genoma(); 
+        ### FALTA:
+        # Recorrer L_genes
+        # Buscar rangos alrededor de cada gen
+        # Devolver los rangos con genes cerca
+        ###
+        return seq_out
+
+
+    def rangos_mismo_largo(self, largo, genes_cercanos=False):
+        # Devuelve un elemento seq_data con rangos del mismo largo correspondientes con los rangos de self
+        # Usa self.dict_range si genes_cercanos=False y self.genes_cercanos si genes_cercanos=True
+
+        # Inicializo el elemento seq_data que se devuelve
+        seq_out = self.clonar(); 
+        # Defino con que diccionario trabajo
+        if genes_cercanos:
+            # Recorro las keys de self.genes_cercanos
+            for chr_n in self.genes_cercanos.keys():
+                # Defino la lista de genes
+                L_genes = self.genes_cercanos[chr_n]; 
+                # Recorro la lista de genes
+                for L_gen in L_genes:
+                    # Defino gen y L_range
+                    curr_gen = L_gen[0]; 
+                    L_range = L_gen[1]; 
+                    # Recorro los rangos
+                    for curr_range in L_range:
+                        rango_largo = self._rango_largo_definido(curr_range[0], curr_range[1], largo); 
+                        seq_out.cargar_rango(chr_n, rango_largo[0], rango_largo[1], forward=curr_range[2], gen_cercano=curr_gen); 
+        else:
+            # Recorro las keys de self.dict_range
+            for chr_n in self.dict_range.keys():
+                # Defino la lista de rangos
+                L_range = self.dict_range[chr_n]; 
+                # Recorro los rangos
+                for curr_range in L_range:
+                    rango_largo = self._rango_largo_definido(curr_range[0], curr_range[1], largo); 
+                    seq_out.cargar_rango(chr_n, rango_largo[0], rango_largo[1], forward=curr_range[2]); 
+        return seq_out
+
+
     def secuencias_rangos_fasta(self, nom_out, path_out='.\\', genes_cercanos=False):
         # Devuelve los rangos de self.dict_range como secuencias en formato fasta
         # Si genes_cercanos es True, devuelve rangos de self.genes_cercanos en vez de self.dict_range
@@ -1545,7 +1632,7 @@ Clase que crea y maneja objetos seq_data para correr los distintos pipelines
         # Creo seq_data con sitios de union
         seq_sitios = seq_ref.buscar_sitios_union_lista(L_sitios, genes_cercanos=cargar_genes); 
         # Guardo los rangos de seq_sitios en nom_out, en carpeta path_arch_usado
-        seq_sitios.guardar_rangos_archivo(nom_out, path_out=path_arch_usado); 
+        seq_sitios.guardar_rangos_archivo(nom_out, path_out=path_arch_usado, guardar_genes=cargar_genes); 
 
         return self
 
@@ -1748,6 +1835,18 @@ def _main_test():
     print()
     print('### Iniciando busqueda de sitios confirmados en papers')
     handle.generar_archivos_SU_L_promotores(L_SU_papers,nom_out_papers,L_rangos,L_genomas_promotores,path_fasta=path_usado,path_ref=path_out,path_out=path_out); 
+
+    ### FALTA (para MEME):
+    # Probar seq_data.secuencias_rangos_fasta()
+    # Probar seq_data._rango_largo_definido()
+    # Probar seq_data.rangos_mismo_largo()
+    # Funcion para seleccionar rangos de seq_data que esten cerca de genes
+        # Cerca de cualquier gen: 
+            # seq_data.rangos_cerca_gen()
+        # Cerca de lista de genes: 
+            # seq_data.rangos_cerca_L_genes()
+    # Funcion para seleccionar rangos de seq_data que tengan sitios de union
+    ###
 
     ### FALTA (no prioritario):
     # Distancia a picos ChIP-seq de lista de genes
