@@ -1827,12 +1827,12 @@ def _main_test():
     # Defino sitios de union y nombres
     L_SU_AAGTG = ['AAGTG']; 
     nom_out_AAGTG = 'AAGTG'; 
-    L_SU_papers = []; 
+    L_SU_papers = ['GCAAGTG', 'GGAAGTG', 'GAAAGTG', 'ATAAGTG', 'GTAAGTG', 'CTAAGTG', 'TCAAGTG', 'TGAAGTG', 'TAAAGTG', 'TTAAGTG']; 
     nom_out_papers = 'papers'; 
     # Genero los archivos de sitios de union
-    print('### Iniciando busqueda de sitios AAGTG')
-    handle.generar_archivos_SU_L_promotores(L_SU_AAGTG,nom_out_AAGTG,L_rangos,L_genomas_promotores,path_fasta=path_usado,path_ref=path_out,path_out=path_out); 
-    print()
+    #print('### Iniciando busqueda de sitios AAGTG')
+    #handle.generar_archivos_SU_L_promotores(L_SU_AAGTG,nom_out_AAGTG,L_rangos,L_genomas_promotores,path_fasta=path_usado,path_ref=path_out,path_out=path_out); 
+    #print()
     print('### Iniciando busqueda de sitios confirmados en papers')
     handle.generar_archivos_SU_L_promotores(L_SU_papers,nom_out_papers,L_rangos,L_genomas_promotores,path_fasta=path_usado,path_ref=path_out,path_out=path_out); 
 
