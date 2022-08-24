@@ -1821,7 +1821,7 @@ def _main_test():
     bed_anderson = ['Anderson2018-GSE89457consensus', 'hg19']; 
     L_bed = [bed_dupays, bed_anderson]; 
     # Genomas usados para promotores
-    L_genomas_promotores = ['mm9', 'hg19']; 
+    L_genomas_promotores = ['hg19']; 
     # Rangos usados para promotores
     L_rangos = [(-1500,1500), (-10000,10000), (-50000,50000)]; 
     # Defino sitios de union y nombres
@@ -1830,8 +1830,8 @@ def _main_test():
     L_SU_papers = ['GCAAGTG', 'GGAAGTG', 'GAAAGTG', 'ATAAGTG', 'GTAAGTG', 'CTAAGTG', 'TCAAGTG', 'TGAAGTG', 'TAAAGTG', 'TTAAGTG']; 
     nom_out_papers = 'papers'; 
     # Genero los archivos de sitios de union
-    #print('### Iniciando busqueda de sitios AAGTG')
-    #handle.generar_archivos_SU_L_promotores(L_SU_AAGTG,nom_out_AAGTG,L_rangos,L_genomas_promotores,path_fasta=path_usado,path_ref=path_out,path_out=path_out); 
+    print('### Iniciando busqueda de sitios AAGTG')
+    handle.generar_archivos_SU_L_promotores(L_SU_AAGTG,nom_out_AAGTG,L_rangos,L_genomas_promotores,path_fasta=path_usado,path_ref=path_out,path_out=path_out); 
     #print()
     print('### Iniciando busqueda de sitios confirmados en papers')
     handle.generar_archivos_SU_L_promotores(L_SU_papers,nom_out_papers,L_rangos,L_genomas_promotores,path_fasta=path_usado,path_ref=path_out,path_out=path_out); 
