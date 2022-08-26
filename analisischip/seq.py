@@ -1846,6 +1846,7 @@ def _main_test():
         # Cerca de lista de genes: 
             # seq_data.rangos_cerca_L_genes()
     # Funcion para seleccionar rangos de seq_data que tengan sitios de union
+        # Funcion que revisa que un rango tenga un sitio de union
     ###
 
     ### FALTA (no prioritario):
