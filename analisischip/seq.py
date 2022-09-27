@@ -3,7 +3,7 @@ import os
 import time
 import logging
 # Analisis de secuencias y genomas
-from Bio import Entrez, SeqIO
+from Bio import Entrez, SeqIO, motifs, Seq
 from pyensembl import EnsemblRelease
 # Generacion de histogramas
 import matplotlib.pyplot as plt
@@ -79,6 +79,26 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         return ret
 
 
+    def _buscar_PSSM_en_seq(self, pssm, seq_referencia, score_cutoff=3.0, pos_ini_ref=0):
+        # Busca todas las ocurrencias de pssm con score mayor a score_cutoff en seq_referencia
+        # Devuelve una lista de sitios de union en formato [posicion, score, seq_encontrada]
+        # seq_referencia puede ser elemento Bio.Seq.Seq() o string
+        # pssm tiene que ser elemento derivado de Bio.motifs
+
+        # Inicializo la lista de sitios de union
+        L_su = []; 
+        # Defino el largo de la secuencia buscada
+        len_pssm = len(pssm.consensus); 
+        # Uso pssm.search() para obtener una lista de posiciones con scores mayores a score_cutoff
+        for position, score in pssm.search(seq_referencia, threshold=score_cutoff):
+            # Defino la secuencia encontrada
+            seq_encontrada = seq_referencia[position:position+len_pssm]; 
+            # Agrego position, score y seq_encontrada a L_su
+            curr_su = [position, score, seq_encontrada]; 
+            L_su.append(curr_su[:]); 
+        return L_su
+
+
     def _buscar_rango_contenido(self, chr_n, pos_ini, pos_end):
         # Busca si un rango dado se encuentra contenido entre los rangos de self.dict_range
         # Devuelve True si lo encuentra y False si no
@@ -118,26 +138,26 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         # En vez de recorrer dos veces o registrar distintos numeros para forward/reverse, registra pos_ini y pos_end con booleano forward
 
         # Inicializo la lista de sitios de union
-        L_SU = [];
+        L_su = []; 
         # Recorro seq_referencia
         for i in range(len(seq_referencia)-len(seq_union)+1):
-            # Inicializo curr_SU
-            curr_SU = [];
+            # Inicializo curr_su
+            curr_su = []; 
             # Defino la secuencia que se revisa
-            curr_seq = str(seq_referencia[i:i+len(seq_union)]).upper();
+            curr_seq = str(seq_referencia[i:i+len(seq_union)]).upper(); 
             # Defino el reverso
-            curr_seq_rev = str(self.complemento_secuencia(curr_seq)).upper();
+            curr_seq_rev = str(self.complemento_secuencia(curr_seq)).upper(); 
             # Si seq_union es igual a curr_seq, registro pos_ini, pos_end, True
             if str(seq_union).upper() == str(curr_seq).upper():
-                curr_SU = [pos_ini_ref+i+1, pos_ini_ref+i+len(seq_union), True];
+                curr_su = [pos_ini_ref+i+1, pos_ini_ref+i+len(seq_union), True]; 
             # Si seq_union es igual a curr_seq_rev, registro pos_ini, pos_end, False
             elif str(seq_union).upper() == str(curr_seq_rev).upper():
-                curr_SU = [pos_ini_ref+i+1, pos_ini_ref+i+len(seq_union), False];
-            # Reviso si curr_SU esta registrado
-            if len(curr_SU) > 0:
-                # Si se encontro un sitio de union, tiene largo mayor a 0 y lo registro en L_SU
-                L_SU.append(curr_SU[:]);
-        return L_SU
+                curr_su = [pos_ini_ref+i+1, pos_ini_ref+i+len(seq_union), False]; 
+            # Reviso si curr_su esta registrado
+            if len(curr_su) > 0:
+                # Si se encontro un sitio de union, tiene largo mayor a 0 y lo registro en L_su
+                L_su.append(curr_su[:]); 
+        return L_su
 
 
     def _cargar_dict_chrid(self, genome_name):
