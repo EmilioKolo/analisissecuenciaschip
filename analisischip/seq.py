@@ -94,10 +94,10 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
             # Defino la secuencia encontrada
             seq_encontrada = seq_referencia[position:position+len_pssm]; 
             # Defino pos_out en base a position y pos_ini_ref
-            if position<0:
-                pos_out = pos_ini_ref+len_pssm+position; 
+            if position < 0:
+                pos_out = pos_ini_ref + len(seq_referencia) + position; 
             else:
-                pos_out = position+pos_ini_ref
+                pos_out = position+pos_ini_ref; 
             # Agrego position, score y seq_encontrada a L_su
             curr_su = [pos_out, score, seq_encontrada]; 
             L_su.append(curr_su[:]); 
