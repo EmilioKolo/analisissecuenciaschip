@@ -93,8 +93,13 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         for position, score in pssm.search(seq_referencia, threshold=score_cutoff):
             # Defino la secuencia encontrada
             seq_encontrada = seq_referencia[position:position+len_pssm]; 
+            # Defino pos_out en base a position y pos_ini_ref
+            if position<0:
+                pos_out = pos_ini_ref+len_pssm+position; 
+            else:
+                pos_out = position+pos_ini_ref
             # Agrego position, score y seq_encontrada a L_su
-            curr_su = [position+pos_ini_ref, score, seq_encontrada]; 
+            curr_su = [pos_out, score, seq_encontrada]; 
             L_su.append(curr_su[:]); 
         return L_su
 
