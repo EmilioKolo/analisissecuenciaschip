@@ -89,21 +89,24 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         L_su = []; 
         # Defino el largo de la secuencia buscada
         len_pssm = len(pssm.consensus); 
-        try:
-            # Uso pssm.search() para obtener una lista de posiciones con scores mayores a score_cutoff
-            for position, score in pssm.search(seq_referencia, threshold=score_cutoff):
-                # Defino la secuencia encontrada
-                seq_encontrada = seq_referencia[position:position+len_pssm]; 
-                # Defino pos_out en base a position y pos_ini_ref
-                if position < 0:
-                    pos_out = pos_ini_ref + len(seq_referencia) + position; 
-                else:
-                    pos_out = position+pos_ini_ref; 
-                # Agrego position, score y seq_encontrada a L_su
-                curr_su = [pos_out, score, seq_encontrada]; 
-                L_su.append(curr_su[:]); 
-        except:
-            print('ERROR buscando PSSM en seq ' + str(seq_referencia))
+        # Veo que el largo de seq_referencia sea mayor o igual al largo de pssm.consensus
+        if len(seq_referencia) >= len_pssm:
+            # Uso try por si se agarra otro error
+            try:
+                # Uso pssm.search() para obtener una lista de posiciones con scores mayores a score_cutoff
+                for position, score in pssm.search(seq_referencia, threshold=score_cutoff):
+                    # Defino la secuencia encontrada
+                    seq_encontrada = seq_referencia[position:position+len_pssm]; 
+                    # Defino pos_out en base a position y pos_ini_ref
+                    if position < 0:
+                        pos_out = pos_ini_ref + len(seq_referencia) + position; 
+                    else:
+                        pos_out = position+pos_ini_ref; 
+                    # Agrego position, score y seq_encontrada a L_su
+                    curr_su = [pos_out, score, seq_encontrada]; 
+                    L_su.append(curr_su[:]); 
+            except:
+                print('ERROR buscando PSSM en seq ' + str(seq_referencia))
         return L_su
 
 
