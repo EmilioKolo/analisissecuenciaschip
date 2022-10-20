@@ -79,7 +79,7 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         return ret
 
 
-    def _buscar_PSSM_en_seq(self, pssm, seq_referencia, score_cutoff=3.0, pos_ini_ref=0):
+    def _buscar_PSSM_en_seq(self, pssm, seq_referencia, score_cutoff=5.0, pos_ini_ref=0):
         # Busca todas las ocurrencias de pssm con score mayor a score_cutoff en seq_referencia
         # Devuelve una lista de sitios de union en formato [posicion, score, seq_encontrada]
         # seq_referencia puede ser elemento Bio.Seq.Seq() o string
@@ -89,18 +89,21 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         L_su = []; 
         # Defino el largo de la secuencia buscada
         len_pssm = len(pssm.consensus); 
-        # Uso pssm.search() para obtener una lista de posiciones con scores mayores a score_cutoff
-        for position, score in pssm.search(seq_referencia, threshold=score_cutoff):
-            # Defino la secuencia encontrada
-            seq_encontrada = seq_referencia[position:position+len_pssm]; 
-            # Defino pos_out en base a position y pos_ini_ref
-            if position < 0:
-                pos_out = pos_ini_ref + len(seq_referencia) + position; 
-            else:
-                pos_out = position+pos_ini_ref; 
-            # Agrego position, score y seq_encontrada a L_su
-            curr_su = [pos_out, score, seq_encontrada]; 
-            L_su.append(curr_su[:]); 
+        try:
+            # Uso pssm.search() para obtener una lista de posiciones con scores mayores a score_cutoff
+            for position, score in pssm.search(seq_referencia, threshold=score_cutoff):
+                # Defino la secuencia encontrada
+                seq_encontrada = seq_referencia[position:position+len_pssm]; 
+                # Defino pos_out en base a position y pos_ini_ref
+                if position < 0:
+                    pos_out = pos_ini_ref + len(seq_referencia) + position; 
+                else:
+                    pos_out = position+pos_ini_ref; 
+                # Agrego position, score y seq_encontrada a L_su
+                curr_su = [pos_out, score, seq_encontrada]; 
+                L_su.append(curr_su[:]); 
+        except:
+            print('ERROR buscando PSSM en seq ' + str(seq_referencia))
         return L_su
 
 
