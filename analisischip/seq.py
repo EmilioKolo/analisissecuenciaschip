@@ -79,7 +79,7 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
         return ret
 
 
-    def _buscar_PSSM_en_seq(self, pssm, seq_referencia, score_cutoff=5.0, pos_ini_ref=0):
+    def _buscar_PSSM_en_seq(self, pssm, seq_referencia, score_cutoff=5.0, pos_ini_ref=0, return_reverse=False):
         # Busca todas las ocurrencias de pssm con score mayor a score_cutoff en seq_referencia
         # Devuelve una lista de sitios de union en formato [posicion, score, seq_encontrada]
         # seq_referencia puede ser elemento Bio.Seq.Seq() o string
@@ -100,10 +100,15 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
                     # Defino pos_out en base a position y pos_ini_ref
                     if position < 0:
                         pos_out = pos_ini_ref + len(seq_referencia) + position; 
+                        reverse = True; 
                     else:
                         pos_out = position+pos_ini_ref; 
+                        reverse = False; 
                     # Agrego position, score y seq_encontrada a L_su
                     curr_su = [pos_out, score, seq_encontrada]; 
+                    # Agrego reverse si return_reverse es True
+                    if return_reverse:
+                        curr_su.append(reverse); 
                     L_su.append(curr_su[:]); 
             except:
                 print('ERROR buscando PSSM en seq ' + str(seq_referencia))
