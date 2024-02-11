@@ -1,1 +1,1 @@
-from analisischip.seq import seq_data
+from analisischip.seq import *
