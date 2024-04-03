@@ -221,7 +221,7 @@ Descarga archivos .fasta con los cromosomas necesarios para las secuencias usada
                                'chr17':'NC_000083.6', 'chr18':'NC_000084.6', 'chr19':'NC_000085.6', 'chr2':'NC_000068.7',
                                'chr3':'NC_000069.6', 'chr4':'NC_000070.6', 'chr5':'NC_000071.6', 'chr6':'NC_000072.6',
                                'chr7':'NC_000073.6', 'chr8':'NC_000074.6', 'chr9':'NC_000075.6', 
-                               'chrX':'	NC_000086.7', 'chrY':'NC_000087.7', 'chrMT':'NC_005089.1', 'chrM':'NC_005089.1'}; 
+                               'chrX':'NC_000086.7', 'chrY':'NC_000087.7', 'chrMT':'NC_005089.1', 'chrM':'NC_005089.1'}; 
             self.genome_name = 'mm10'; 
         else:
             logging.warning('No se encontro el genoma ' + genome_name + ', se asume genoma ' + default_dict_name + '.'); 
